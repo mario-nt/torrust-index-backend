@@ -7,7 +7,7 @@ use rand_core::OsRng;
 
 use crate::errors::{ServiceResult, ServiceError};
 use crate::common::WebAppData;
-use crate::config::EmailOnSignup;
+use crate::config::{EmailOnSignup, InvitatiOnOnSignup};
 use crate::models::response::OkResponse;
 use crate::models::response::TokenResponse;
 use crate::mailer::VerifyClaims;
@@ -38,6 +38,7 @@ pub struct Register {
     pub email: Option<String>,
     pub password: String,
     pub confirm_password: String,
+    pub invitation: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -53,6 +54,18 @@ pub struct Token {
 
 pub async fn register(req: HttpRequest, mut payload: web::Json<Register>, app_data: WebAppData) -> ServiceResult<impl Responder> {
     let settings = app_data.cfg.settings.read().await;
+
+    match settings.auth.invitation_on_signup {
+        InvitatiOnOnSignup::Required => {
+            if payload.invitation.is_none() { return Err(ServiceError::InvitationMissing) }
+        }
+        InvitatiOnOnSignup::None => {
+            payload.invitation = None
+        }
+        _ => {}
+    }
+
+    // TODO: Verify invitation.
 
     match settings.auth.email_on_signup {
         EmailOnSignup::Required => {

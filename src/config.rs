@@ -40,8 +40,16 @@ pub enum EmailOnSignup {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum InvitatiOnOnSignup {
+    Required,
+    Optional,
+    None
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Auth {
     pub email_on_signup: EmailOnSignup,
+    pub invitation_on_signup: InvitatiOnOnSignup,
     pub min_password_length: usize,
     pub max_password_length: usize,
     pub secret_key: String,
@@ -98,6 +106,7 @@ impl Configuration {
             },
             auth: Auth {
                 email_on_signup: EmailOnSignup::Optional,
+                invitation_on_signup: InvitatiOnOnSignup::Optional,
                 min_password_length: 6,
                 max_password_length: 64,
                 secret_key: "MaxVerstappenWC2021".to_string()
