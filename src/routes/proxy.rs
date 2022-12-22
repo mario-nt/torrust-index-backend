@@ -3,6 +3,7 @@ use actix_web::{HttpResponse, Responder, web};
 use actix_web::http::StatusCode;
 use serde::{Deserialize};
 
+use crate::common::WebAppData;
 use crate::errors::{ServiceError, ServiceResult};
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
@@ -18,11 +19,26 @@ pub struct ProxyImageRequest {
 }
 
 const MAX_PROXIED_IMAGE_SIZE: usize = 10_000_000;
+const MAX_PROXIED_IMAGE_TIMEOUT_SECS: u64 = 5;
 
-pub async fn get_proxy_image(query: web::Query<ProxyImageRequest>) -> ServiceResult<impl Responder> {
+// TODO: Move logic to separate proxy handler.
+// TODO: Restrict route access to users only.
+// TODO: Rate limit this route in bytes per time frame.
+pub async fn get_proxy_image(app_data: WebAppData, query: web::Query<ProxyImageRequest>) -> ServiceResult<impl Responder> {
+    println!("{:?}", query);
+
+    // Check if image is already in our cache and send it if so.
+    if let Some(cached_image) = app_data.image_cache.get(&query.url).await {
+        println!("Returning cached image: {{ url: {}, size: {} }}", &query.url, cached_image.bytes.len());
+
+        return Ok(HttpResponse::build(StatusCode::OK)
+            .content_type("image/jpeg")
+            .body(cached_image.bytes))
+    }
+
     // Build a reqwest client with max connection timeout of 5 secs.
     let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(5))
+        .timeout(Duration::from_secs(MAX_PROXIED_IMAGE_TIMEOUT_SECS))
         .build()
         .unwrap();
 
@@ -51,7 +67,9 @@ pub async fn get_proxy_image(query: web::Query<ProxyImageRequest>) -> ServiceRes
         return Err(ServiceError::BadRequest)
     }
 
-    // TODO: Store image in cache.
+    // TODO: Update the cache on a separate thread, so that the client does not have to wait.
+    // Update image cache.
+    app_data.image_cache.set(query.url.to_string(), image_bytes.clone()).await;
 
     Ok(HttpResponse::build(StatusCode::OK)
         .content_type("image/jpeg")

@@ -3,6 +3,7 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
 use torrust_index_backend::auth::AuthorizationService;
+use torrust_index_backend::cache::image::ImageCache;
 use torrust_index_backend::common::AppData;
 use torrust_index_backend::config::Configuration;
 use torrust_index_backend::databases::database::connect_database;
@@ -30,12 +31,15 @@ async fn main() -> std::io::Result<()> {
     let auth = Arc::new(AuthorizationService::new(cfg.clone(), database.clone()));
     let tracker_service = Arc::new(TrackerService::new(cfg.clone(), database.clone()));
     let mailer_service = Arc::new(MailerService::new(cfg.clone()).await);
+    let image_cache = Arc::new(ImageCache::new());
+
     let app_data = Arc::new(AppData::new(
         cfg.clone(),
         database.clone(),
         auth.clone(),
         tracker_service.clone(),
         mailer_service.clone(),
+        image_cache
     ));
 
     let interval = settings.database.torrent_info_update_interval;
