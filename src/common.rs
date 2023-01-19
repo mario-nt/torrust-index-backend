@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::auth::AuthorizationService;
-use crate::cache::image::ImageCache;
+use crate::cache::image::ByteCache;
 use crate::config::Configuration;
 use crate::databases::database::Database;
 use crate::mailer::MailerService;
@@ -17,7 +17,7 @@ pub struct AppData {
     pub auth: Arc<AuthorizationService>,
     pub tracker: Arc<TrackerService>,
     pub mailer: Arc<MailerService>,
-    pub image_cache: Arc<ImageCache>
+    pub image_cache: Arc<ByteCache>
 }
 
 impl AppData {
@@ -27,7 +27,7 @@ impl AppData {
         auth: Arc<AuthorizationService>,
         tracker: Arc<TrackerService>,
         mailer: Arc<MailerService>,
-        image_cache: Arc<ImageCache>
+        image_cache: Arc<ByteCache>
     ) -> AppData {
         AppData {
             cfg,
