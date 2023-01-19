@@ -5,8 +5,8 @@ use tokio::sync::RwLock;
 #[derive(Debug)]
 pub enum Error {
     EntrySizeLimitExceedsTotalCapacity,
-    ImageTooBigForEntry,
-    ImageTooBigForCache,
+    BytesExceedEntrySizeLimit,
+    CacheCapacityIsTooSmall,
     CacheFull
 }
 
@@ -76,7 +76,13 @@ impl ByteCache {
         self.bytes_table.read().await.get(url).cloned()
     }
 
-    pub async fn size(&self) -> usize {
+    // Return the amount of entries in the map.
+    pub async fn len(&self) -> usize {
+        self.bytes_table.read().await.len()
+    }
+
+    // Size of all the entry bytes combined.
+    pub async fn total_size(&self) -> usize {
         let mut size: usize = 0;
 
         for (_, image) in self.bytes_table.read().await.iter() {
@@ -89,6 +95,10 @@ impl ByteCache {
     // Insert image using the url as key.
     // TODO: Freed space might need to be reserved. Hold and pass write lock between functions?
     pub async fn set(&self, url: String, bytes: Bytes) -> Result<Option<ByteCacheEntry>, Error> {
+        if bytes.len() > self.entry_size_limit {
+            return  Err(Error::BytesExceedEntrySizeLimit)
+        }
+
         // Remove the old entry so that a new entry will be added as last in the queue.
         let _ = self.bytes_table.write().await.shift_remove(&url);
 
@@ -103,10 +113,10 @@ impl ByteCache {
     async fn free_size(&self, size: usize) -> Result<(), Error> {
         // Size may not exceed the total capacity of the image cache.
         if size > self.total_capacity {
-            return Err(Error::ImageTooBigForCache)
+            return Err(Error::CacheCapacityIsTooSmall)
         }
 
-        let cache_size = self.size().await;
+        let cache_size = self.total_size().await;
         let size_to_be_freed = size.saturating_sub(self.total_capacity - cache_size);
         let mut size_freed: usize = 0;
 
@@ -142,6 +152,36 @@ mod tests {
         let byte_cache = ByteCache::with_capacity_and_entry_size_limit(6, 6).unwrap();
         let bytes: Bytes = Bytes::from("abcdef");
 
-        assert!(byte_cache.set("test".to_string(), bytes).await.is_ok())
+        assert!(byte_cache.set("1".to_string(), bytes).await.is_ok())
+    }
+
+    #[tokio::test]
+    async fn set_multiple_bytes_cache_with_capacity_and_entry_size_limit_should_have_len_of_two() {
+        let byte_cache = ByteCache::with_capacity_and_entry_size_limit(12, 6).unwrap();
+        let bytes: Bytes = Bytes::from("abcdef");
+
+        assert!(byte_cache.set("1".to_string(), bytes.clone()).await.is_ok());
+        assert!(byte_cache.set("2".to_string(), bytes).await.is_ok());
+
+        assert_eq!(byte_cache.len().await, 2)
+    }
+
+    #[tokio::test]
+    async fn set_multiple_bytes_cache_with_capacity_and_entry_size_limit_should_have_len_of_one() {
+        let byte_cache = ByteCache::with_capacity_and_entry_size_limit(11, 6).unwrap();
+        let bytes: Bytes = Bytes::from("abcdef");
+
+        assert!(byte_cache.set("1".to_string(), bytes.clone()).await.is_ok());
+        assert!(byte_cache.set("2".to_string(), bytes).await.is_ok());
+
+        assert_eq!(byte_cache.len().await, 1)
+    }
+
+    #[tokio::test]
+    async fn set_bytes_cache_with_capacity_and_entry_size_limit_should_fail() {
+        let byte_cache = ByteCache::with_capacity_and_entry_size_limit(6, 5).unwrap();
+        let bytes: Bytes = Bytes::from("abcdef");
+
+        assert!(byte_cache.set("1".to_string(), bytes).await.is_err())
     }
 }
