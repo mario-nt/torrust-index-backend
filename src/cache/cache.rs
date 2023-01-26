@@ -1,6 +1,5 @@
 use bytes::Bytes;
 use indexmap::IndexMap;
-use tokio::sync::RwLock;
 
 #[derive(Debug)]
 pub enum Error {
@@ -10,14 +9,13 @@ pub enum Error {
     CacheFull
 }
 
-// TODO: Add last updated timestamp.
 #[derive(Debug, Clone)]
-pub struct ByteCacheEntry {
+pub struct BytesCacheEntry {
     pub bytes: Bytes
 }
 
-// Individual image destined for the image cache.
-impl ByteCacheEntry {
+// Individual entry destined for the byte cache.
+impl BytesCacheEntry {
     pub fn new(bytes: Bytes) -> Self {
         Self {
             bytes
@@ -25,16 +23,16 @@ impl ByteCacheEntry {
     }
 }
 
-pub struct ByteCache {
-    bytes_table: RwLock<IndexMap<String, ByteCacheEntry>>,
+pub struct BytesCache {
+    bytes_table: IndexMap<String, BytesCacheEntry>,
     total_capacity: usize,
     entry_size_limit: usize
 }
 
-impl ByteCache {
+impl BytesCache {
     pub fn new() -> Self {
         Self {
-            bytes_table: RwLock::new(IndexMap::new()),
+            bytes_table: IndexMap::new(),
             total_capacity: 0,
             entry_size_limit: 0,
         }
@@ -72,58 +70,58 @@ impl ByteCache {
         Ok(new)
     }
 
-    pub async fn get(&self, url: &str) -> Option<ByteCacheEntry> {
-        self.bytes_table.read().await.get(url).cloned()
+    pub async fn get(&self, key: &str) -> Option<BytesCacheEntry> {
+        self.bytes_table.get(key).cloned()
     }
 
     // Return the amount of entries in the map.
     pub async fn len(&self) -> usize {
-        self.bytes_table.read().await.len()
+        self.bytes_table.len()
     }
 
     // Size of all the entry bytes combined.
-    pub async fn total_size(&self) -> usize {
+    pub fn total_size(&self) -> usize {
         let mut size: usize = 0;
 
-        for (_, image) in self.bytes_table.read().await.iter() {
-            size += image.bytes.len();
+        for (_, entry) in self.bytes_table.iter() {
+            size += entry.bytes.len();
         }
 
         size
     }
 
-    // Insert image using the url as key.
+    // Insert bytes using key.
     // TODO: Freed space might need to be reserved. Hold and pass write lock between functions?
-    pub async fn set(&self, url: String, bytes: Bytes) -> Result<Option<ByteCacheEntry>, Error> {
+    // For TO DO above: semaphore: Arc<tokio::sync::Semaphore>, might be a solution.
+    pub async fn set(&mut self, key: String, bytes: Bytes) -> Result<Option<BytesCacheEntry>, Error> {
         if bytes.len() > self.entry_size_limit {
             return  Err(Error::BytesExceedEntrySizeLimit)
         }
 
         // Remove the old entry so that a new entry will be added as last in the queue.
-        let _ = self.bytes_table.write().await.shift_remove(&url);
+        let _ = self.bytes_table.shift_remove(&key);
 
-        let image_cache_entry = ByteCacheEntry::new(bytes);
+        let bytes_cache_entry = BytesCacheEntry::new(bytes);
 
-        self.free_size(image_cache_entry.bytes.len()).await?;
+        self.free_size(bytes_cache_entry.bytes.len())?;
 
-        Ok(self.bytes_table.write().await.insert(url, image_cache_entry))
+        Ok(self.bytes_table.insert(key, bytes_cache_entry))
     }
 
     // Free space. Size amount in bytes.
-    async fn free_size(&self, size: usize) -> Result<(), Error> {
-        // Size may not exceed the total capacity of the image cache.
+    fn free_size(&mut self, size: usize) -> Result<(), Error> {
+        // Size may not exceed the total capacity of the bytes cache.
         if size > self.total_capacity {
             return Err(Error::CacheCapacityIsTooSmall)
         }
 
-        let cache_size = self.total_size().await;
+        let cache_size = self.total_size();
         let size_to_be_freed = size.saturating_sub(self.total_capacity - cache_size);
         let mut size_freed: usize = 0;
 
         while size_freed < size_to_be_freed {
             let oldest_entry = self.pop()
-                .await
-                .expect("Image cache has no more entries, yet there isn't enough space.");
+                .expect("bytes cache has no more entries, yet there isn't enough space.");
 
             size_freed += oldest_entry.bytes.len();
         }
@@ -132,12 +130,16 @@ impl ByteCache {
     }
 
     // Remove and return the oldest entry.
-    pub async fn pop(&self) -> Option<ByteCacheEntry> {
+    pub fn pop(&mut self) -> Option<BytesCacheEntry> {
         self.bytes_table
-            .write()
-            .await
             .shift_remove_index(0)
             .map(|(_, entry)| entry)
+    }
+}
+
+impl Default for BytesCache {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -145,43 +147,43 @@ impl ByteCache {
 mod tests {
     use bytes::Bytes;
 
-    use crate::cache::image::ByteCache;
+    use crate::cache::cache::BytesCache;
 
     #[tokio::test]
     async fn set_bytes_cache_with_capacity_and_entry_size_limit_should_succeed() {
-        let byte_cache = ByteCache::with_capacity_and_entry_size_limit(6, 6).unwrap();
+        let mut bytes_cache = BytesCache::with_capacity_and_entry_size_limit(6, 6).unwrap();
         let bytes: Bytes = Bytes::from("abcdef");
 
-        assert!(byte_cache.set("1".to_string(), bytes).await.is_ok())
+        assert!(bytes_cache.set("1".to_string(), bytes).await.is_ok())
     }
 
     #[tokio::test]
     async fn set_multiple_bytes_cache_with_capacity_and_entry_size_limit_should_have_len_of_two() {
-        let byte_cache = ByteCache::with_capacity_and_entry_size_limit(12, 6).unwrap();
+        let mut bytes_cache = BytesCache::with_capacity_and_entry_size_limit(12, 6).unwrap();
         let bytes: Bytes = Bytes::from("abcdef");
 
-        assert!(byte_cache.set("1".to_string(), bytes.clone()).await.is_ok());
-        assert!(byte_cache.set("2".to_string(), bytes).await.is_ok());
+        assert!(bytes_cache.set("1".to_string(), bytes.clone()).await.is_ok());
+        assert!(bytes_cache.set("2".to_string(), bytes).await.is_ok());
 
-        assert_eq!(byte_cache.len().await, 2)
+        assert_eq!(bytes_cache.len().await, 2)
     }
 
     #[tokio::test]
     async fn set_multiple_bytes_cache_with_capacity_and_entry_size_limit_should_have_len_of_one() {
-        let byte_cache = ByteCache::with_capacity_and_entry_size_limit(11, 6).unwrap();
+        let mut bytes_cache = BytesCache::with_capacity_and_entry_size_limit(11, 6).unwrap();
         let bytes: Bytes = Bytes::from("abcdef");
 
-        assert!(byte_cache.set("1".to_string(), bytes.clone()).await.is_ok());
-        assert!(byte_cache.set("2".to_string(), bytes).await.is_ok());
+        assert!(bytes_cache.set("1".to_string(), bytes.clone()).await.is_ok());
+        assert!(bytes_cache.set("2".to_string(), bytes).await.is_ok());
 
-        assert_eq!(byte_cache.len().await, 1)
+        assert_eq!(bytes_cache.len().await, 1)
     }
 
     #[tokio::test]
     async fn set_bytes_cache_with_capacity_and_entry_size_limit_should_fail() {
-        let byte_cache = ByteCache::with_capacity_and_entry_size_limit(6, 5).unwrap();
+        let mut bytes_cache = BytesCache::with_capacity_and_entry_size_limit(6, 5).unwrap();
         let bytes: Bytes = Bytes::from("abcdef");
 
-        assert!(byte_cache.set("1".to_string(), bytes).await.is_err())
+        assert!(bytes_cache.set("1".to_string(), bytes).await.is_err())
     }
 }

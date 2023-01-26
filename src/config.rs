@@ -66,6 +66,13 @@ pub struct Mail {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cache {
+    pub image_cache_max_request_timeout_ms: u64,
+    pub image_cache_capacity: usize,
+    pub image_cache_entry_size_limit: usize
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TorrustConfig {
     pub website: Website,
     pub tracker: Tracker,
@@ -73,6 +80,7 @@ pub struct TorrustConfig {
     pub auth: Auth,
     pub database: Database,
     pub mail: Mail,
+    pub cache: Cache
 }
 
 #[derive(Debug)]
@@ -116,6 +124,11 @@ impl Configuration {
                 server: "".to_string(),
                 port: 25,
             },
+            cache: Cache {
+                image_cache_max_request_timeout_ms: 1000,
+                image_cache_capacity: 128_000_000,
+                image_cache_entry_size_limit: 4_000_000
+            }
         };
 
         Configuration {
