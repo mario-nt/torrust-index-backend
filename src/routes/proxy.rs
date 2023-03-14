@@ -19,15 +19,12 @@ pub struct ProxyImageRequest {
     url: String
 }
 
-// TODO: Restrict route access to users only.
 // TODO: Rate limit this route in bytes per time frame.
 pub async fn get_proxy_image(req: HttpRequest, app_data: WebAppData, query: web::Query<ProxyImageRequest>) -> ServiceResult<impl Responder> {
-    println!("{:?}", query);
+    // Check for optional user.
+    let opt_user = app_data.auth.get_user_compact_from_request(&req).await.ok();
 
-    // check for user
-    let user = app_data.auth.get_user_compact_from_request(&req).await?;
-
-    let image_bytes = app_data.image_cache_manager.get_image_by_url(&user.user_id, &query.url).await?;
+    let image_bytes = app_data.image_cache_manager.get_image_by_url(&query.url, opt_user).await?;
 
     Ok(HttpResponse::build(StatusCode::OK)
         .content_type("image/jpeg")

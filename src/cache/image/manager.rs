@@ -1,16 +1,25 @@
 use std::collections::HashMap;
+use std::fs;
+use std::sync::Once;
 use std::time::{Duration, SystemTime};
 use bytes::Bytes;
 use tokio::sync::RwLock;
 
 use crate::cache::cache::BytesCache;
-use crate::models::user::UserId;
+use crate::models::user::{UserCompact, UserId};
+
+const IMAGE_CACHE_QUOTA_PERIOD_SECONDS: u64 = 3600;
+const IMAGE_CACHE_QUOTA_BYTES: usize = 64_000_000;
+
+static ERROR_IMAGE_LOADER: Once = Once::new();
+static mut ERROR_IMAGE_UNAUTHENTICATED: Bytes = Bytes::new();
 
 pub enum Error {
     UrlIsUnreachable,
     UrlIsNotAnImage,
     ImageTooBig,
-    UserQuotaMet
+    UserQuotaMet,
+    Unauthenticated
 }
 
 type UserQuotas = HashMap<UserId, ImageCacheQuota>;
@@ -94,14 +103,33 @@ impl ImageCacheManager {
         }
     }
 
-    pub async fn get_image_by_url(&self, user_id: &UserId, url: &str) -> Result<Bytes, Error> {
+    fn load_error_images() {
+        ERROR_IMAGE_LOADER.call_once(|| unsafe {
+            ERROR_IMAGE_UNAUTHENTICATED = Bytes::from(fs::read("resources/images/sign_in_to_see_img.png").unwrap());
+        });
+    }
+
+    /// Get an image from the url and insert it into the cache if it isn't cached already.
+    /// Unauthenticated users can only get already cached images.
+    pub async fn get_image_by_url(&self, url: &str, opt_user: Option<UserCompact>) -> Result<Bytes, Error> {
+        Self::load_error_images();
+
         // Check if image is already in our cache and send it if so.
-        if let Some(entry) = self.image_cache.read().await.get(&url).await {
+        if let Some(entry) = self.image_cache.read().await.get(url).await {
             return Ok(entry.bytes)
         }
 
-        if let Some(quota) = self.user_quotas.read().await.get(&user_id) {
+        // Check if authenticated.
+        if opt_user.is_none() {
+            unsafe { return Ok(ERROR_IMAGE_UNAUTHENTICATED.clone()) }
+        }
+
+        let user = opt_user.unwrap();
+
+        // Check user quota.
+        if let Some(quota) = self.user_quotas.read().await.get(&user.user_id) {
             if quota.met() {
+                println!("User: {}, went over their image proxy quota of {}!", user.user_id, quota.max_usage);
                 return Err(Error::UserQuotaMet)
             }
         }
@@ -139,9 +167,19 @@ impl ImageCacheManager {
             return Err(Error::ImageTooBig)
         }
 
-        if let Some(mut quota) = self.user_quotas.read().await.get(&user_id).cloned() {
-            let _ = quota.add_usage(image_bytes.len());
-        }
+        let mut quota = self.user_quotas.read().await.get(&user.user_id)
+            .cloned()
+            .unwrap_or(ImageCacheQuota::new(
+                user.user_id,
+                IMAGE_CACHE_QUOTA_BYTES,
+                IMAGE_CACHE_QUOTA_PERIOD_SECONDS)
+            );
+
+        let _ = quota.add_usage(image_bytes.len());
+
+        let _ = self.user_quotas.write().await.insert(user.user_id, quota);
+
+        println!("User: {}, inserted a new image in the cache of size {}", user.user_id, image_bytes.len());
 
         Ok(image_bytes)
     }
