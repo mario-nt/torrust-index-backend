@@ -8,8 +8,9 @@ use tokio::sync::RwLock;
 use crate::cache::cache::BytesCache;
 use crate::models::user::{UserCompact, UserId};
 
-const IMAGE_CACHE_QUOTA_PERIOD_SECONDS: u64 = 3600;
-const IMAGE_CACHE_QUOTA_BYTES: usize = 64_000_000;
+// todo: add these to config.
+const IMAGE_CACHE_USER_QUOTA_PERIOD_SECONDS: u64 = 3600;
+const IMAGE_CACHE_USER_QUOTA_BYTES: usize = 64_000_000;
 
 static ERROR_IMAGE_LOADER: Once = Once::new();
 static mut ERROR_IMAGE_UNAUTHENTICATED: Bytes = Bytes::new();
@@ -121,7 +122,7 @@ impl ImageCacheManager {
 
         // Check if authenticated.
         if opt_user.is_none() {
-            unsafe { return Ok(ERROR_IMAGE_UNAUTHENTICATED.clone()) }
+            return Err(Error::Unauthenticated)
         }
 
         let user = opt_user.unwrap();
@@ -129,7 +130,6 @@ impl ImageCacheManager {
         // Check user quota.
         if let Some(quota) = self.user_quotas.read().await.get(&user.user_id) {
             if quota.met() {
-                println!("User: {}, went over their image proxy quota of {}!", user.user_id, quota.max_usage);
                 return Err(Error::UserQuotaMet)
             }
         }
@@ -171,15 +171,13 @@ impl ImageCacheManager {
             .cloned()
             .unwrap_or(ImageCacheQuota::new(
                 user.user_id,
-                IMAGE_CACHE_QUOTA_BYTES,
-                IMAGE_CACHE_QUOTA_PERIOD_SECONDS)
+                IMAGE_CACHE_USER_QUOTA_BYTES,
+                IMAGE_CACHE_USER_QUOTA_PERIOD_SECONDS)
             );
 
         let _ = quota.add_usage(image_bytes.len());
 
         let _ = self.user_quotas.write().await.insert(user.user_id, quota);
-
-        println!("User: {}, inserted a new image in the cache of size {}", user.user_id, image_bytes.len());
 
         Ok(image_bytes)
     }
