@@ -69,7 +69,9 @@ pub struct Mail {
 pub struct Cache {
     pub image_cache_max_request_timeout_ms: u64,
     pub image_cache_capacity: usize,
-    pub image_cache_entry_size_limit: usize
+    pub image_cache_entry_size_limit: usize,
+    pub image_cache_user_quota_period_seconds: u64,
+    pub image_cache_user_quota_bytes: usize
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -127,7 +129,9 @@ impl Configuration {
             cache: Cache {
                 image_cache_max_request_timeout_ms: 1000,
                 image_cache_capacity: 128_000_000,
-                image_cache_entry_size_limit: 4_000_000
+                image_cache_entry_size_limit: 4_000_000,
+                image_cache_user_quota_period_seconds: 3600,
+                image_cache_user_quota_bytes: 64_000_000
             }
         };
 
