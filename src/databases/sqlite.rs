@@ -7,6 +7,7 @@ use crate::databases::database::{Category, Database, DatabaseDriver, DatabaseErr
 use crate::models::response::TorrentsResponse;
 use crate::models::torrent::TorrentListing;
 use crate::models::torrent_file::{DbTorrentAnnounceUrl, DbTorrentFile, DbTorrentInfo, Torrent, TorrentFile};
+use crate::models::torrent_tag::{TagId, TorrentTag};
 use crate::models::tracker_key::TrackerKey;
 use crate::models::user::{User, UserAuthentication, UserCompact, UserProfile};
 use crate::utils::hex::bytes_to_hex;
@@ -376,7 +377,7 @@ impl Database for SqliteDatabase {
         uploader_id: i64,
         category_id: i64,
         title: &str,
-        description: &str,
+        description: &str
     ) -> Result<i64, DatabaseError> {
         let info_hash = torrent.info_hash();
 
@@ -640,6 +641,66 @@ impl Database for SqliteDatabase {
                     Err(DatabaseError::TorrentNotFound)
                 }
             })
+    }
+
+    async fn add_torrent_tag(&self, name: &str) -> Result<(), DatabaseError> {
+        query("INSERT INTO torrust_torrent_tags (name) VALUES (?)")
+            .bind(name)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(|_| DatabaseError::Error)
+    }
+
+    async fn delete_torrent_tag(&self, tag_id: TagId) -> Result<(), DatabaseError> {
+        query("DELETE FROM torrust_torrent_tags WHERE tag_id = ?")
+            .bind(tag_id)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(|_| DatabaseError::Error)
+    }
+
+    async fn add_torrent_tag_link(&self, torrent_id: i64, tag_id: TagId) -> Result<(), DatabaseError> {
+        query("INSERT INTO torrust_torrent_tag_links (torrent_id, tag_id) VALUES (?, ?)")
+            .bind(torrent_id)
+            .bind(tag_id)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(|_| DatabaseError::Error)
+    }
+
+    async fn delete_torrent_tag_link(&self, torrent_id: i64, tag_id: TagId) -> Result<(), DatabaseError> {
+        query("DELETE FROM torrust_torrent_tag_links WHERE torrent_id = ? AND tag_id = ?")
+            .bind(torrent_id)
+            .bind(tag_id)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(|_| DatabaseError::Error)
+    }
+
+    async fn get_tags(&self) -> Result<Vec<TorrentTag>, DatabaseError> {
+        query_as::<_, TorrentTag>(
+            "SELECT tag_id, name FROM torrust_torrent_tags"
+        )
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|_| DatabaseError::Error)
+    }
+
+    async fn get_tags_for_torrent_id(&self, torrent_id: i64) -> Result<Vec<TorrentTag>, DatabaseError> {
+        query_as::<_, TorrentTag>(
+            "SELECT torrust_torrent_tags.tag_id, torrust_torrent_tags.name
+            FROM torrust_torrent_tags
+            JOIN torrust_torrent_tag_links ON torrust_torrent_tags.tag_id = torrust_torrent_tag_links.tag_id
+            WHERE torrust_torrent_tag_links.torrent_id = ?"
+        )
+            .bind(torrent_id)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|_| DatabaseError::Error)
     }
 
     async fn update_tracker_info(

@@ -14,6 +14,7 @@ use crate::models::response::{NewTorrentResponse, OkResponse, TorrentResponse};
 use crate::models::torrent::TorrentRequest;
 use crate::utils::parse_torrent;
 use crate::AsCSV;
+use crate::models::torrent_tag::TagId;
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -40,6 +41,7 @@ pub struct CreateTorrent {
     pub title: String,
     pub description: String,
     pub category: String,
+    pub tags: Vec<TagId>
 }
 
 impl CreateTorrent {
@@ -92,9 +94,14 @@ pub async fn upload_torrent(req: HttpRequest, payload: Multipart, app_data: WebA
             user.user_id,
             category.category_id,
             &torrent_request.fields.title,
-            &torrent_request.fields.description,
+            &torrent_request.fields.description
         )
         .await?;
+
+    // add the torrent tag links
+    for tag_id in torrent_request.fields.tags {
+        app_data.database.add_torrent_tag_link(torrent_id, tag_id).await?
+    }
 
     // update torrent tracker stats
     let _ = app_data
@@ -172,6 +179,8 @@ pub async fn get_torrent(req: HttpRequest, app_data: WebAppData) -> ServiceResul
     let mut torrent_response = TorrentResponse::from_listing(torrent_listing);
 
     torrent_response.category = category;
+
+    torrent_response.tags = app_data.database.get_tags_for_torrent_id(torrent_id).await?;
 
     let tracker_url = settings.tracker.url.clone();
 
@@ -338,13 +347,14 @@ async fn get_torrent_request_from_payload(mut payload: Multipart) -> Result<Torr
     let mut title = "".to_string();
     let mut description = "".to_string();
     let mut category = "".to_string();
+    let mut tags: Vec<TagId> = vec![];
 
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
         let name = content_type.get_name().unwrap();
 
         match name {
-            "title" | "description" | "category" => {
+            "title" | "description" | "category" | "tags" => {
                 let data = field.next().await;
                 if data.is_none() {
                     continue;
@@ -356,6 +366,7 @@ async fn get_torrent_request_from_payload(mut payload: Multipart) -> Result<Torr
                     "title" => title = parsed_data.to_string(),
                     "description" => description = parsed_data.to_string(),
                     "category" => category = parsed_data.to_string(),
+                    "tags" => tags = serde_json::from_str(parsed_data).unwrap(),
                     _ => {}
                 }
             }
@@ -377,6 +388,7 @@ async fn get_torrent_request_from_payload(mut payload: Multipart) -> Result<Torr
         title,
         description,
         category,
+        tags
     };
 
     fields.verify()?;

@@ -7,6 +7,7 @@ pub mod settings;
 pub mod torrent;
 pub mod user;
 pub mod proxy;
+pub mod tag;
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     user::init_routes(cfg);
@@ -15,5 +16,6 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     settings::init_routes(cfg);
     about::init_routes(cfg);
     proxy::init_routes(cfg);
+    tag::init_routes(cfg);
     root::init_routes(cfg);
 }

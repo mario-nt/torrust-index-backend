@@ -7,6 +7,7 @@ use crate::databases::sqlite::SqliteDatabase;
 use crate::models::response::TorrentsResponse;
 use crate::models::torrent::TorrentListing;
 use crate::models::torrent_file::{DbTorrentInfo, Torrent, TorrentFile};
+use crate::models::torrent_tag::{TagId, TorrentTag};
 use crate::models::tracker_key::TrackerKey;
 use crate::models::user::{User, UserAuthentication, UserCompact, UserProfile};
 
@@ -151,7 +152,7 @@ pub trait Database: Sync + Send {
         uploader_id: i64,
         category_id: i64,
         title: &str,
-        description: &str,
+        description: &str
     ) -> Result<i64, DatabaseError>;
 
     /// Get `Torrent` from `torrent_id`.
@@ -177,6 +178,24 @@ pub trait Database: Sync + Send {
 
     /// Update a torrent's description with `torrent_id` and `description`.
     async fn update_torrent_description(&self, torrent_id: i64, description: &str) -> Result<(), DatabaseError>;
+
+    /// Add a new tag.
+    async fn add_torrent_tag(&self, name: &str) -> Result<(), DatabaseError>;
+
+    /// Delete a tag.
+    async fn delete_torrent_tag(&self, tag_id: TagId) -> Result<(), DatabaseError>;
+
+    /// Add a tag to torrent.
+    async fn add_torrent_tag_link(&self, torrent_id: i64, tag_id: TagId) -> Result<(), DatabaseError>;
+
+    /// Remove a tag from torrent.
+    async fn delete_torrent_tag_link(&self, torrent_id: i64, tag_id: TagId) -> Result<(), DatabaseError>;
+
+    /// Get all tags as `Vec<TorrentTag>`.
+    async fn get_tags(&self) -> Result<Vec<TorrentTag>, DatabaseError>;
+
+    /// Get tags for `torrent_id`.
+    async fn get_tags_for_torrent_id(&self, torrent_id: i64) -> Result<Vec<TorrentTag>, DatabaseError>;
 
     /// Update the seeders and leechers info for a torrent with `torrent_id`, `tracker_url`, `seeders` and `leechers`.
     async fn update_tracker_info(
