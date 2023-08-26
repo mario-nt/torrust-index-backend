@@ -82,7 +82,7 @@ impl TorrentResponse {
             trackers: vec![],
             magnet_link: String::new(),
             tags: vec![],
-            name: torrent_listing.name
+            name: torrent_listing.name,
         }
     }
 }
