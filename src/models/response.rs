@@ -61,7 +61,7 @@ pub struct TorrentResponse {
     pub trackers: Vec<String>,
     pub magnet_link: String,
     pub tags: Vec<TorrentTag>,
-    pub name: String
+    pub name: String,
 }
 
 impl TorrentResponse {
