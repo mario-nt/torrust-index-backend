@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS torrust_torrent_http_seeds (
+    http_seed_id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    torrent_id INTEGER NOT NULL,
+    url TEXT DEFAULT NULL, 
+    FOREIGN KEY(torrent_id) REFERENCES torrust_torrents(torrent_id) ON DELETE CASCADE
+)

@@ -29,6 +29,8 @@ pub struct Index {
     user_repository: Arc<DbUserRepository>,
     category_repository: Arc<DbCategoryRepository>,
     torrent_repository: Arc<DbTorrentRepository>,
+    torrent_nodes_repository: Arc<DbTorrentNodesRepository>,
+    torrent_http_seeds_repository: Arc<DbTorrentHttpSeedsRepository>,
     torrent_info_hash_repository: Arc<DbCanonicalInfoHashGroupRepository>,
     torrent_info_repository: Arc<DbTorrentInfoRepository>,
     torrent_file_repository: Arc<DbTorrentFileRepository>,
@@ -85,6 +87,8 @@ impl Index {
         user_repository: Arc<DbUserRepository>,
         category_repository: Arc<DbCategoryRepository>,
         torrent_repository: Arc<DbTorrentRepository>,
+        torrent_nodes_repository: Arc<DbTorrentNodesRepository>,
+        torrent_http_seeds_repository: Arc<DbTorrentHttpSeedsRepository>,
         torrent_info_hash_repository: Arc<DbCanonicalInfoHashGroupRepository>,
         torrent_info_repository: Arc<DbTorrentInfoRepository>,
         torrent_file_repository: Arc<DbTorrentFileRepository>,
@@ -99,6 +103,8 @@ impl Index {
             user_repository,
             category_repository,
             torrent_repository,
+            torrent_nodes_repository: Arc<DbTorrentNodesRepository>,
+            torrent_http_seeds_repository: Arc<DbTorrentHttpSeedsRepository>,
             torrent_info_hash_repository,
             torrent_info_repository,
             torrent_file_repository,
@@ -547,6 +553,37 @@ impl DbTorrentRepository {
         self.database.delete_torrent(*torrent_id).await
     }
 }
+
+
+
+pub struct DbTorrentNodesRepository{
+    database: Arc<Box<dyn Database>>,
+}
+
+impl DbTorrentNodesRepository{
+
+
+
+
+
+
+
+
+
+}
+
+
+
+pub struct DbTorrentHttpSeedsRepository{
+
+}
+
+
+
+
+
+
+
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct DbTorrentInfoHash {

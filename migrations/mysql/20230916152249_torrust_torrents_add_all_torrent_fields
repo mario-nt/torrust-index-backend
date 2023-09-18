@@ -1,0 +1,4 @@
+ALTER TABLE torrust_torrents 
+ADD COLUMN "encoding" TEXT DEFAULT NULL,
+ADD COLUMN creation_date DATETIME NOT NULL,
+ADD COLUMN created_by TEXT DEFAULT NULL,

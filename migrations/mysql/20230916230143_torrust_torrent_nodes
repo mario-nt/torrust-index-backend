@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS torrust_torrent_nodes (
+    node_id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    --node_number??
+    torrent_id INTEGER NOT NULL,
+    node_ip TEXT DEFAULT NULL, 
+    node_port TEXT DEFAULT NULL,
+    FOREIGN KEY(torrent_id) REFERENCES torrust_torrents(torrent_id) ON DELETE CASCADE
+)
