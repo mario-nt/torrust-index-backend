@@ -40,6 +40,7 @@ async-trait = "0"
 axum = { version = "0", features = ["multipart"] }
 binascii = "0"
 bytes = "1"
+casbin = "2.2.0"
 chrono = { version = "0", default-features = false, features = ["clock"] }
 clap = { version = "4.5.4", features = ["derive", "env"]}
 config = "0"
