@@ -6,6 +6,8 @@ use torrust_index::web::api::Version;
 async fn main() -> Result<(), std::io::Error> {
     let configuration = initialize_configuration();
 
+    let mut e = Enforcer::new("casbin/model.conf", "casbin/policy.csv").await?;
+
     let api_version = Version::V1;
 
     let app = app::run(configuration, &api_version).await;
