@@ -1,10 +1,15 @@
 //! Authorization service.
 use std::sync::Arc;
 
+use casbin::prelude::*;
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
+
 use super::user::Repository;
 use crate::errors::ServiceError;
 use crate::models::user::{UserCompact, UserId};
 
+#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub enum ACTION {
     AddCategory,
     DeleteCategory,
@@ -16,12 +21,20 @@ pub enum ACTION {
 
 pub struct Service {
     user_repository: Arc<Box<dyn Repository>>,
+    casbin_enforcer: Arc<CasbinEnforcer>,
 }
 
 impl Service {
     #[must_use]
-    pub fn new(user_repository: Arc<Box<dyn Repository>>) -> Self {
-        Self { user_repository }
+    pub fn new(user_repository: Arc<Box<dyn Repository>>, casbin_enforcer: Arc<CasbinEnforcer>) -> Self {
+        Self {
+            user_repository,
+            casbin_enforcer,
+        }
+    }
+
+    pub async fn get_user(&self, user_id: UserId) -> std::result::Result<UserCompact, ServiceError> {
+        self.user_repository.get_compact(&user_id).await
     }
 
     /// # Errors
@@ -30,32 +43,42 @@ impl Service {
     ///
     /// - There is not any user with the provided `UserId` (when the user id is some).
     /// - The user is not authorized to perform the action.
-    pub async fn authorize(&self, action: ACTION, maybe_user_id: Option<UserId>) -> Result<(), ServiceError> {
-        match action {
-            ACTION::AddCategory
-            | ACTION::DeleteCategory
-            | ACTION::GetSettings
-            | ACTION::GetSettingsSecret
-            | ACTION::AddTag
-            | ACTION::DeleteTag => match maybe_user_id {
-                Some(user_id) => {
-                    let user = self.get_user(user_id).await?;
+    pub async fn authorize(&self, action: ACTION, maybe_user_id: Option<UserId>) -> std::result::Result<(), ServiceError> {
+        match maybe_user_id {
+            Some(user_id) => {
+                let user = self.get_user(user_id).await.map_err(|_| ServiceError::UserNotFound);
 
-                    if !user.administrator {
-                        return Err(ServiceError::Unauthorized);
-                    }
+                let sub = user.unwrap().user_id; // the user that wants to access a resource.
+                let act = action; // the operation that the user performs on the resource.
 
-                    Ok(())
+                let authorize = self.casbin_enforcer.clone().enforcer.read().await.enforce((sub, act));
+
+                match authorize {
+                    Ok(_) => Ok(()),
+
+                    Err(_) => Err(ServiceError::Unauthorized),
                 }
-                None => Err(ServiceError::Unauthorized),
-            },
+            }
+
+            None => return Err(ServiceError::Unauthorized),
         }
     }
+}
+pub struct CasbinEnforcer {
+    enforcer: Arc<RwLock<Enforcer>>, //Arc<tokio::sync::RwLock<casbin::Enforcer>>
+}
 
-    async fn get_user(&self, user_id: UserId) -> Result<UserCompact, ServiceError> {
-        self.user_repository.get_compact(&user_id).await
+impl CasbinEnforcer {
+    pub async fn new() -> Self {
+        let enforcer = Enforcer::new("../../casbin/model.conf", "../../casbin/policy.csv")
+            .await
+            .unwrap();
+        let enforcer = Arc::new(RwLock::new(enforcer));
+        //casbin_enforcer.enable_log(true);
+        Self { enforcer }
     }
 }
+
 #[allow(unused_imports)]
 #[cfg(test)]
 mod test {
