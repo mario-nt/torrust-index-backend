@@ -70,9 +70,7 @@ pub struct CasbinEnforcer {
 
 impl CasbinEnforcer {
     pub async fn new() -> Self {
-        let enforcer = Enforcer::new("../../casbin/model.conf", "../../casbin/policy.csv")
-            .await
-            .unwrap();
+        let enforcer = Enforcer::new("src/casbin/model.conf", "src/casbin/policy.csv").await.unwrap();
         let enforcer = Arc::new(RwLock::new(enforcer));
         //casbin_enforcer.enable_log(true);
         Self { enforcer }
