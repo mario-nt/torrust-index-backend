@@ -1,8 +1,9 @@
-p, admin, A
-p, testuser, AddCategory
-p, admin, AddCategory
-p, admin, ACTION::DeleteCategory
-
+p, 1, AddCategory
+p, 1, DeleteCategory
+p, 1, GetSettings
+p, 1, GetSettingsSecret
+p, 1, AddTag
+p, 1, DeleteTag
 
 g, alice, data2_admin
 

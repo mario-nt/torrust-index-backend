@@ -46,17 +46,24 @@ impl Service {
     pub async fn authorize(&self, action: ACTION, maybe_user_id: Option<UserId>) -> std::result::Result<(), ServiceError> {
         match maybe_user_id {
             Some(user_id) => {
-                let user = self.get_user(user_id).await.map_err(|_| ServiceError::UserNotFound);
+                let user_guard = self.get_user(user_id).await.map_err(|_| ServiceError::UserNotFound);
 
-                let sub = user.unwrap().user_id; // the user that wants to access a resource.
+                let user = user_guard.unwrap().user_id;
+
+                let sub = user.to_string(); // the user that wants to access a resource.
                 let act = action; // the operation that the user performs on the resource.
 
-                let authorize = self.casbin_enforcer.clone().enforcer.read().await.enforce((sub, act));
+                let enforcer = self.casbin_enforcer.enforcer.read().await;
+
+                /* let enforcer = self.casbin_enforcer.clone();
+                let enforcer_lock = enforcer.enforcer.read().await; */
+
+                let authorize = enforcer.enforce((sub, act)).unwrap();
 
                 match authorize {
-                    Ok(_) => Ok(()),
+                    true => Ok(()),
 
-                    Err(_) => Err(ServiceError::Unauthorized),
+                    false => Err(ServiceError::Unauthorized),
                 }
             }
 
