@@ -48,9 +48,9 @@ impl Service {
             Some(user_id) => {
                 let user_guard = self.get_user(user_id).await.map_err(|_| ServiceError::UserNotFound);
 
-                let user = user_guard.unwrap().user_id;
+                let user = user_guard.unwrap().username;
 
-                let sub = user.to_string(); // the user that wants to access a resource.
+                let sub = user; // the user that wants to access a resource.
                 let act = action; // the operation that the user performs on the resource.
 
                 let enforcer = self.casbin_enforcer.enforcer.read().await;
