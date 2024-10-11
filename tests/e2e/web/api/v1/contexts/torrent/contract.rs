@@ -1504,5 +1504,27 @@ mod and_admins {
             assert!(torrent_list_response.data.total > 0);
             assert!(response.is_json_and_ok());
         }
+        #[tokio::test]
+        async fn it_should_allow_admin_users_to_get_torrent_details_searching_by_info_hash() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            if !env.provides_a_tracker() {
+                println!("test skipped. It requires a tracker to be running.");
+                return;
+            }
+
+            let admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &admin.token);
+
+            let uploader = new_logged_in_user(&env).await;
+
+            let (test_torrent, _uploaded_torrent) = upload_random_torrent_to_index(&uploader, &env).await;
+
+            let response = client.get_torrent(&test_torrent.file_info_hash()).await;
+
+            assert_eq!(response.status, 200);
+        }
     }
 }
