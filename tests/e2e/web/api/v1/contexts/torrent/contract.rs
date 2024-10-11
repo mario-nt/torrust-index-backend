@@ -1367,7 +1367,9 @@ mod and_admins {
             common::{
                 client::Client,
                 contexts::torrent::{
-                    fixtures::random_torrent, forms::UploadTorrentMultipartForm, responses::TorrentListResponse,
+                    fixtures::random_torrent,
+                    forms::{UpdateTorrentFrom, UploadTorrentMultipartForm},
+                    responses::TorrentListResponse,
                 },
                 http::Query,
             },
@@ -1549,6 +1551,43 @@ mod and_admins {
             let canonical_infohash = upload_test_torrent(&upload_client, &test_torrent).await.unwrap().to_string();
 
             let response = client.get_torrent(&canonical_infohash).await;
+
+            assert_eq!(response.status, 200);
+        }
+
+        #[tokio::test]
+        async fn it_should_allow_admin_users_to_update_someone_elses_torrents() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            if !env.provides_a_tracker() {
+                println!("test skipped. It requires a tracker to be running.");
+                return;
+            }
+
+            // Given a users uploads a torrent
+            let uploader = new_logged_in_user(&env).await;
+            let (test_torrent, _uploaded_torrent) = upload_random_torrent_to_index(&uploader, &env).await;
+
+            // Then admin user should be able to update the torrent
+            let admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &admin.token);
+
+            let new_title = format!("{}-new-title", test_torrent.index_info.title);
+            let new_description = format!("{}-new-description", test_torrent.index_info.description);
+
+            let response = client
+                .update_torrent(
+                    &test_torrent.file_info_hash(),
+                    UpdateTorrentFrom {
+                        title: Some(new_title.clone()),
+                        description: Some(new_description.clone()),
+                        category: None,
+                        tags: None,
+                    },
+                )
+                .await;
 
             assert_eq!(response.status, 200);
         }
