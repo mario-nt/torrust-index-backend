@@ -949,7 +949,6 @@ mod for_authenticated_users {
         use torrust_index::web::api;
 
         use crate::common::client::Client;
-
         use crate::e2e::environment::TestEnv;
         use crate::e2e::web::api::v1::contexts::torrent::steps::upload_random_torrent_to_index;
         use crate::e2e::web::api::v1::contexts::user::steps::new_logged_in_user;
@@ -1363,24 +1362,14 @@ mod and_admins {
     mod authorization {
         use torrust_index::web::api;
 
-        use crate::{
-            common::{
-                client::Client,
-                contexts::torrent::{
-                    fixtures::random_torrent,
-                    forms::{UpdateTorrentFrom, UploadTorrentMultipartForm},
-                    responses::TorrentListResponse,
-                },
-                http::Query,
-            },
-            e2e::{
-                environment::TestEnv,
-                web::api::v1::contexts::{
-                    torrent::steps::{upload_random_torrent_to_index, upload_test_torrent},
-                    user::steps::{new_logged_in_admin, new_logged_in_user},
-                },
-            },
-        };
+        use crate::common::client::Client;
+        use crate::common::contexts::torrent::fixtures::random_torrent;
+        use crate::common::contexts::torrent::forms::{UpdateTorrentFrom, UploadTorrentMultipartForm};
+        use crate::common::contexts::torrent::responses::TorrentListResponse;
+        use crate::common::http::Query;
+        use crate::e2e::environment::TestEnv;
+        use crate::e2e::web::api::v1::contexts::torrent::steps::{upload_random_torrent_to_index, upload_test_torrent};
+        use crate::e2e::web::api::v1::contexts::user::steps::{new_logged_in_admin, new_logged_in_user};
 
         #[tokio::test]
         async fn it_should_allow_admin_users_to_upload_torrents() {
