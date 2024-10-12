@@ -1591,5 +1591,38 @@ mod and_admins {
 
             assert_eq!(response.status, 200);
         }
+        #[tokio::test]
+        async fn it_should_allow_registered_users_to_update_their_own_torrents() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            if !env.provides_a_tracker() {
+                println!("test skipped. It requires a tracker to be running.");
+                return;
+            }
+
+            let admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &admin.token);
+
+            let (test_torrent, _uploaded_torrent) = upload_random_torrent_to_index(&admin, &env).await;
+
+            let new_title = format!("{}-new-title", test_torrent.index_info.title);
+            let new_description = format!("{}-new-description", test_torrent.index_info.description);
+
+            let response = client
+                .update_torrent(
+                    &test_torrent.file_info_hash(),
+                    UpdateTorrentFrom {
+                        title: Some(new_title.clone()),
+                        description: Some(new_description.clone()),
+                        category: None,
+                        tags: None,
+                    },
+                )
+                .await;
+
+            assert_eq!(response.status, 200);
+        }
     }
 }
