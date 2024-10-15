@@ -132,21 +132,6 @@ async fn it_should_allow_admins_to_delete_tags() {
     assert_deleted_tag_response(&response, tag_id);
 }
 
-#[tokio::test]
-async fn it_should_not_allow_non_admins_to_delete_tags() {
-    let mut env = TestEnv::new();
-    env.start(api::Version::V1).await;
-
-    let logged_in_non_admin = new_logged_in_user(&env).await;
-    let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_non_admin.token);
-
-    let (tag_id, _tag_name) = add_random_tag(&env).await;
-
-    let response = client.delete_tag(DeleteTagForm { tag_id }).await;
-
-    assert_eq!(response.status, 403);
-}
-
 mod authorization {
     mod for_guests {
         use torrust_index::web::api;
@@ -193,6 +178,68 @@ mod authorization {
             env.start(api::Version::V1).await;
 
             let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
+
+            // Add a tag
+            let tag_name = random_tag_name();
+            let response = add_tag(&tag_name, &env).await;
+            assert_eq!(response.status, 200);
+
+            let response = client.get_tags().await;
+
+            assert_eq!(response.status, 200);
+        }
+    }
+    mod for_authenticated_users {
+        use torrust_index::web::api;
+
+        use crate::common::client::Client;
+        use crate::common::contexts::tag::fixtures::random_tag_name;
+        use crate::common::contexts::tag::forms::{AddTagForm, DeleteTagForm};
+        use crate::e2e::environment::TestEnv;
+        use crate::e2e::web::api::v1::contexts::tag::steps::{add_random_tag, add_tag};
+        use crate::e2e::web::api::v1::contexts::user::steps::new_logged_in_user;
+
+        #[tokio::test]
+        async fn it_should_not_allow_registered_users_to_add_tags() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_non_admin = new_logged_in_user(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_non_admin.token);
+
+            let response = client
+                .add_tag(AddTagForm {
+                    name: "TAG NAME".to_string(),
+                })
+                .await;
+
+            assert_eq!(response.status, 403);
+        }
+
+        #[tokio::test]
+        async fn it_should_not_allow_registered_users_to_delete_tags() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_non_admin = new_logged_in_user(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_non_admin.token);
+
+            let (tag_id, _tag_name) = add_random_tag(&env).await;
+
+            let response = client.delete_tag(DeleteTagForm { tag_id }).await;
+
+            assert_eq!(response.status, 403);
+        }
+        #[tokio::test]
+        async fn it_should_allow_registered_users_to_get_tags() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_non_admin = new_logged_in_user(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_non_admin.token);
 
             // Add a tag
             let tag_name = random_tag_name();
