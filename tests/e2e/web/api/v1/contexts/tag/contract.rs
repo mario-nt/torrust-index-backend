@@ -51,22 +51,6 @@ async fn it_should_return_a_tag_list() {
 }
 
 #[tokio::test]
-async fn it_should_not_allow_adding_a_new_tag_to_unauthenticated_users() {
-    let mut env = TestEnv::new();
-    env.start(api::Version::V1).await;
-
-    let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
-
-    let response = client
-        .add_tag(AddTagForm {
-            name: "TAG NAME".to_string(),
-        })
-        .await;
-
-    assert_eq!(response.status, 401);
-}
-
-#[tokio::test]
 async fn it_should_not_allow_adding_a_new_tag_to_non_admins() {
     let mut env = TestEnv::new();
     env.start(api::Version::V1).await;
@@ -163,16 +147,61 @@ async fn it_should_not_allow_non_admins_to_delete_tags() {
     assert_eq!(response.status, 403);
 }
 
-#[tokio::test]
-async fn it_should_not_allow_guests_to_delete_tags() {
-    let mut env = TestEnv::new();
-    env.start(api::Version::V1).await;
+mod authorization {
+    mod for_guests {
+        use torrust_index::web::api;
 
-    let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
+        use crate::common::client::Client;
+        use crate::common::contexts::tag::fixtures::random_tag_name;
+        use crate::common::contexts::tag::forms::{AddTagForm, DeleteTagForm};
+        use crate::e2e::environment::TestEnv;
+        use crate::e2e::web::api::v1::contexts::tag::steps::{add_random_tag, add_tag};
 
-    let (tag_id, _tag_name) = add_random_tag(&env).await;
+        #[tokio::test]
+        async fn it_should_not_allow_guest_users_to_add_tags() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
 
-    let response = client.delete_tag(DeleteTagForm { tag_id }).await;
+            let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
 
-    assert_eq!(response.status, 401);
+            let response = client
+                .add_tag(AddTagForm {
+                    name: "TAG NAME".to_string(),
+                })
+                .await;
+
+            assert_eq!(response.status, 401);
+        }
+
+        #[tokio::test]
+        async fn it_should_not_allow_guest_users_to_delete_tags() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
+
+            let (tag_id, _tag_name) = add_random_tag(&env).await;
+
+            let response = client.delete_tag(DeleteTagForm { tag_id }).await;
+
+            assert_eq!(response.status, 401);
+        }
+
+        #[tokio::test]
+        async fn it_should_allow_guest_users_to_get_tags() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
+
+            // Add a tag
+            let tag_name = random_tag_name();
+            let response = add_tag(&tag_name, &env).await;
+            assert_eq!(response.status, 200);
+
+            let response = client.get_tags().await;
+
+            assert_eq!(response.status, 200);
+        }
+    }
 }
