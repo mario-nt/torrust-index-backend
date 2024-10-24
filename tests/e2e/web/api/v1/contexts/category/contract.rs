@@ -10,7 +10,7 @@ use crate::common::contexts::category::forms::{AddCategoryForm, DeleteCategoryFo
 use crate::common::contexts::category::responses::ListResponse;
 use crate::e2e::environment::TestEnv;
 use crate::e2e::web::api::v1::contexts::category::steps::{add_category, add_random_category};
-use crate::e2e::web::api::v1::contexts::user::steps::{new_logged_in_admin, new_logged_in_user};
+use crate::e2e::web::api::v1::contexts::user::steps::new_logged_in_admin;
 
 #[tokio::test]
 async fn it_should_return_an_empty_category_list_when_there_are_no_categories() {
