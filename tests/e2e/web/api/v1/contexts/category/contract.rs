@@ -48,42 +48,6 @@ async fn it_should_return_a_category_list() {
 }
 
 #[tokio::test]
-async fn it_should_not_allow_adding_a_new_category_to_unauthenticated_users() {
-    let mut env = TestEnv::new();
-    env.start(api::Version::V1).await;
-
-    let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
-
-    let response = client
-        .add_category(AddCategoryForm {
-            name: "CATEGORY NAME".to_string(),
-            icon: None,
-        })
-        .await;
-
-    assert_eq!(response.status, 401);
-}
-
-#[tokio::test]
-async fn it_should_not_allow_adding_a_new_category_to_non_admins() {
-    let mut env = TestEnv::new();
-    env.start(api::Version::V1).await;
-
-    let logged_non_admin = new_logged_in_user(&env).await;
-
-    let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_non_admin.token);
-
-    let response = client
-        .add_category(AddCategoryForm {
-            name: "CATEGORY NAME".to_string(),
-            icon: None,
-        })
-        .await;
-
-    assert_eq!(response.status, 403);
-}
-
-#[tokio::test]
 async fn it_should_allow_admins_to_add_new_categories() {
     let mut env = TestEnv::new();
     env.start(api::Version::V1).await;
@@ -158,41 +122,76 @@ async fn it_should_allow_admins_to_delete_categories() {
     assert_deleted_category_response(&response, &added_category_name);
 }
 
-#[tokio::test]
-async fn it_should_not_allow_non_admins_to_delete_categories() {
-    let mut env = TestEnv::new();
-    env.start(api::Version::V1).await;
+mod authorization {
+    use torrust_index::web::api;
 
-    let added_category_name = add_random_category(&env).await;
+    use crate::{
+        common::{client::Client, contexts::category::forms::DeleteCategoryForm},
+        e2e::{
+            environment::TestEnv,
+            web::api::v1::contexts::{category::steps::add_random_category, user::steps::new_logged_in_user},
+        },
+    };
 
-    let logged_in_non_admin = new_logged_in_user(&env).await;
-    let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_non_admin.token);
+    mod for_guests {
+        use torrust_index::web::api;
 
-    let response = client
-        .delete_category(DeleteCategoryForm {
-            name: added_category_name.to_string(),
-            icon: None,
-        })
-        .await;
+        use crate::{
+            common::{
+                client::Client,
+                contexts::category::forms::{AddCategoryForm, DeleteCategoryForm},
+            },
+            e2e::{environment::TestEnv, web::api::v1::contexts::category::steps::add_random_category},
+        };
 
-    assert_eq!(response.status, 403);
-}
+        #[tokio::test]
+        async fn it_should_not_allow_guest_users_to_add_tags() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
 
-#[tokio::test]
-async fn it_should_not_allow_guests_to_delete_categories() {
-    let mut env = TestEnv::new();
-    env.start(api::Version::V1).await;
+            let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
 
-    let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
+            let response = client
+                .add_category(AddCategoryForm {
+                    name: "CATEGORY NAME".to_string(),
+                    icon: None,
+                })
+                .await;
 
-    let added_category_name = add_random_category(&env).await;
+            assert_eq!(response.status, 401);
+        }
+        #[tokio::test]
+        async fn it_should_not_allow_guests_to_delete_categories() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
 
-    let response = client
-        .delete_category(DeleteCategoryForm {
-            name: added_category_name.to_string(),
-            icon: None,
-        })
-        .await;
+            let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
 
-    assert_eq!(response.status, 401);
+            let added_category_name = add_random_category(&env).await;
+
+            let response = client
+                .delete_category(DeleteCategoryForm {
+                    name: added_category_name.to_string(),
+                    icon: None,
+                })
+                .await;
+
+            assert_eq!(response.status, 401);
+        }
+        #[tokio::test]
+        async fn it_should_allow_guest_users_to_get_categories() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let client = Client::unauthenticated(&env.server_socket_addr().unwrap());
+
+            add_random_category(&env).await;
+
+            let response = client.get_categories().await;
+
+            assert_eq!(response.status, 200);
+        }
+    }
+    mod for_authenticated_users {}
+    mod for_admin_users {}
 }
