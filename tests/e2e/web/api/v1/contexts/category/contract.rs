@@ -192,6 +192,67 @@ mod authorization {
             assert_eq!(response.status, 200);
         }
     }
-    mod for_authenticated_users {}
+    mod for_authenticated_users {
+        use torrust_index::web::api;
+
+        use crate::{
+            common::{client::Client, contexts::category::forms::AddCategoryForm},
+            e2e::{environment::TestEnv, web::api::v1::contexts::user::steps::new_logged_in_user},
+        };
+
+        #[tokio::test]
+        async fn it_should_not_allow_registered_users_to_add_categories() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_non_admin = new_logged_in_user(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_non_admin.token);
+
+            let response = client
+                .add_category(AddCategoryForm {
+                    name: "CATEGORY NAME".to_string(),
+                    icon: None,
+                })
+                .await;
+
+            assert_eq!(response.status, 403);
+        }
+    }
+    #[tokio::test]
+    async fn it_should_not_allow_registered_users_to_delete_categories() {
+        let mut env = TestEnv::new();
+        env.start(api::Version::V1).await;
+
+        let added_category_name = add_random_category(&env).await;
+
+        let logged_in_non_admin = new_logged_in_user(&env).await;
+
+        let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_non_admin.token);
+
+        let response = client
+            .delete_category(DeleteCategoryForm {
+                name: added_category_name.to_string(),
+                icon: None,
+            })
+            .await;
+
+        assert_eq!(response.status, 403);
+    }
+    #[tokio::test]
+    async fn it_should_allow_registered_users_to_get_categories() {
+        let mut env = TestEnv::new();
+        env.start(api::Version::V1).await;
+
+        let logged_in_non_admin = new_logged_in_user(&env).await;
+
+        let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_non_admin.token);
+
+        add_random_category(&env).await;
+
+        let response = client.get_categories().await;
+
+        assert_eq!(response.status, 200);
+    }
     mod for_admin_users {}
 }
