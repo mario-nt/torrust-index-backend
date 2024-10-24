@@ -254,5 +254,78 @@ mod authorization {
 
         assert_eq!(response.status, 200);
     }
-    mod for_admin_users {}
+    mod for_admin_users {
+        use torrust_index::web::api;
+
+        use crate::{
+            common::{
+                client::Client,
+                contexts::category::{
+                    asserts::assert_deleted_category_response,
+                    fixtures::random_category_name,
+                    forms::{AddCategoryForm, DeleteCategoryForm},
+                },
+            },
+            e2e::{
+                environment::TestEnv,
+                web::api::v1::contexts::{category::steps::add_random_category, user::steps::new_logged_in_admin},
+            },
+        };
+
+        #[tokio::test]
+        async fn it_should_allow_admins_to_add_new_categories() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_admin.token);
+
+            let category_name = random_category_name();
+
+            let response = client
+                .add_category(AddCategoryForm {
+                    name: category_name.to_string(),
+                    icon: None,
+                })
+                .await;
+
+            assert_eq!(response.status, 200);
+        }
+        #[tokio::test]
+        async fn it_should_allow_admins_to_delete_categories() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_admin.token);
+
+            let added_category_name = add_random_category(&env).await;
+
+            let response = client
+                .delete_category(DeleteCategoryForm {
+                    name: added_category_name.to_string(),
+                    icon: None,
+                })
+                .await;
+
+            assert_deleted_category_response(&response, &added_category_name);
+        }
+        #[tokio::test]
+        async fn it_should_allow_admin_users_to_get_categories() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_admin.token);
+
+            add_random_category(&env).await;
+
+            let response = client.get_categories().await;
+
+            assert_eq!(response.status, 200);
+        }
+    }
 }
