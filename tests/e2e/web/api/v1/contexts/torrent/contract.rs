@@ -325,7 +325,7 @@ mod for_guests {
 
             let downloaded_torrent = decode_torrent(&response.bytes).expect("could not decode downloaded torrent");
 
-            let expected_downloaded_torrent = canonical_torrent_for(uploaded_torrent, &env, &None).await;
+            let expected_downloaded_torrent = canonical_torrent_for(uploaded_torrent, &env, None).await;
 
             assert_eq!(downloaded_torrent, expected_downloaded_torrent);
         }

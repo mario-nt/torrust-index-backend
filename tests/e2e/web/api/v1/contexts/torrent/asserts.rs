@@ -14,7 +14,7 @@ use crate::e2e::environment::TestEnv;
 pub async fn canonical_torrent_for(
     mut uploaded_torrent: Torrent,
     env: &TestEnv,
-    downloader: &Option<LoggedInUserData>,
+    downloader: Option<&LoggedInUserData>,
 ) -> Torrent {
     let tracker_url = env.server_settings().unwrap().tracker.url.to_string();
 
@@ -23,8 +23,8 @@ pub async fn canonical_torrent_for(
         None => None,
     };
 
-    uploaded_torrent.announce = Some(build_announce_url(&tracker_url, &tracker_key));
-    uploaded_torrent.announce_list = Some(build_announce_list(&tracker_url, &tracker_key));
+    uploaded_torrent.announce = Some(build_announce_url(&tracker_url, tracker_key.as_ref()));
+    uploaded_torrent.announce_list = Some(build_announce_list(&tracker_url, tracker_key.as_ref()));
 
     uploaded_torrent
 }
@@ -56,7 +56,7 @@ pub async fn get_user_tracker_key(logged_in_user: &LoggedInUserData, env: &TestE
     Some(tracker_key)
 }
 
-pub fn build_announce_url(tracker_url: &str, tracker_key: &Option<TrackerKey>) -> String {
+pub fn build_announce_url(tracker_url: &str, tracker_key: Option<&TrackerKey>) -> String {
     if let Some(key) = &tracker_key {
         format!("{tracker_url}/{}", key.key)
     } else {
@@ -64,7 +64,7 @@ pub fn build_announce_url(tracker_url: &str, tracker_key: &Option<TrackerKey>) -
     }
 }
 
-fn build_announce_list(tracker_url: &str, tracker_key: &Option<TrackerKey>) -> Vec<Vec<String>> {
+fn build_announce_list(tracker_url: &str, tracker_key: Option<&TrackerKey>) -> Vec<Vec<String>> {
     if let Some(key) = &tracker_key {
         vec![vec![format!("{tracker_url}/{}", key.key)], vec![format!("{tracker_url}")]]
     } else {

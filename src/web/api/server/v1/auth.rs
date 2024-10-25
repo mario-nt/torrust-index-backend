@@ -117,7 +117,7 @@ impl Authentication {
     /// # Errors
     ///
     /// This function will return an error if it can get claims from the request
-    pub async fn get_user_id_from_bearer_token(&self, maybe_token: &Option<BearerToken>) -> Result<UserId, ServiceError> {
+    pub async fn get_user_id_from_bearer_token(&self, maybe_token: Option<BearerToken>) -> Result<UserId, ServiceError> {
         let claims = self.get_claims_from_bearer_token(maybe_token).await?;
         Ok(claims.user.user_id)
     }
@@ -130,7 +130,7 @@ impl Authentication {
     ///
     /// - Return an `ServiceError::TokenNotFound` if `HeaderValue` is `None`.
     /// - Pass through the `ServiceError::TokenInvalid` if unable to verify the JWT.
-    async fn get_claims_from_bearer_token(&self, maybe_token: &Option<BearerToken>) -> Result<UserClaims, ServiceError> {
+    async fn get_claims_from_bearer_token(&self, maybe_token: Option<BearerToken>) -> Result<UserClaims, ServiceError> {
         match maybe_token {
             Some(token) => match self.verify_jwt(&token.value()).await {
                 Ok(claims) => Ok(claims),
@@ -166,7 +166,7 @@ pub async fn get_optional_logged_in_user(
     app_data: Arc<AppData>,
 ) -> Result<Option<UserId>, ServiceError> {
     match maybe_bearer_token {
-        Some(bearer_token) => match app_data.auth.get_user_id_from_bearer_token(&Some(bearer_token)).await {
+        Some(bearer_token) => match app_data.auth.get_user_id_from_bearer_token(Some(bearer_token)).await {
             Ok(user_id) => Ok(Some(user_id)),
             Err(error) => Err(error),
         },

@@ -179,14 +179,14 @@ fn build_letter(verification_url: &str, username: &str, builder: MessageBuilder)
 
 fn build_content(verification_url: &str, username: &str) -> Result<(String, String), tera::Error> {
     let plain_body = format!(
-        r#"
+        "
                 Welcome to Torrust, {username}!
 
                 Please click the confirmation link below to verify your account.
                 {verification_url}
 
                 If this account wasn't made by you, you can ignore this email.
-            "#
+            "
     );
     let mut context = Context::new();
     context.insert("verification", &verification_url);
