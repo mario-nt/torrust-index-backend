@@ -29,7 +29,7 @@ where
         //Extracts the app state
         let app_data = Arc::from_ref(state);
 
-        match app_data.auth.get_user_id_from_bearer_token(&maybe_bearer_token).await {
+        match app_data.auth.get_user_id_from_bearer_token(maybe_bearer_token).await {
             Ok(user_id) => Ok(ExtractLoggedInUser(user_id)),
             Err(_) => Err(ServiceError::LoggedInUserNotFound.into_response()),
         }
