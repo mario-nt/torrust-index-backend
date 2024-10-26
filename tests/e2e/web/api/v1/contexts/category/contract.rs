@@ -125,24 +125,19 @@ async fn it_should_allow_admins_to_delete_categories() {
 mod authorization {
     use torrust_index::web::api;
 
-    use crate::{
-        common::{client::Client, contexts::category::forms::DeleteCategoryForm},
-        e2e::{
-            environment::TestEnv,
-            web::api::v1::contexts::{category::steps::add_random_category, user::steps::new_logged_in_user},
-        },
-    };
+    use crate::common::client::Client;
+    use crate::common::contexts::category::forms::DeleteCategoryForm;
+    use crate::e2e::environment::TestEnv;
+    use crate::e2e::web::api::v1::contexts::category::steps::add_random_category;
+    use crate::e2e::web::api::v1::contexts::user::steps::new_logged_in_user;
 
     mod for_guests {
         use torrust_index::web::api;
 
-        use crate::{
-            common::{
-                client::Client,
-                contexts::category::forms::{AddCategoryForm, DeleteCategoryForm},
-            },
-            e2e::{environment::TestEnv, web::api::v1::contexts::category::steps::add_random_category},
-        };
+        use crate::common::client::Client;
+        use crate::common::contexts::category::forms::{AddCategoryForm, DeleteCategoryForm};
+        use crate::e2e::environment::TestEnv;
+        use crate::e2e::web::api::v1::contexts::category::steps::add_random_category;
 
         #[tokio::test]
         async fn it_should_not_allow_guest_users_to_add_tags() {
@@ -195,10 +190,10 @@ mod authorization {
     mod for_authenticated_users {
         use torrust_index::web::api;
 
-        use crate::{
-            common::{client::Client, contexts::category::forms::AddCategoryForm},
-            e2e::{environment::TestEnv, web::api::v1::contexts::user::steps::new_logged_in_user},
-        };
+        use crate::common::client::Client;
+        use crate::common::contexts::category::forms::AddCategoryForm;
+        use crate::e2e::environment::TestEnv;
+        use crate::e2e::web::api::v1::contexts::user::steps::new_logged_in_user;
 
         #[tokio::test]
         async fn it_should_not_allow_registered_users_to_add_categories() {
@@ -257,20 +252,13 @@ mod authorization {
     mod for_admin_users {
         use torrust_index::web::api;
 
-        use crate::{
-            common::{
-                client::Client,
-                contexts::category::{
-                    asserts::assert_deleted_category_response,
-                    fixtures::random_category_name,
-                    forms::{AddCategoryForm, DeleteCategoryForm},
-                },
-            },
-            e2e::{
-                environment::TestEnv,
-                web::api::v1::contexts::{category::steps::add_random_category, user::steps::new_logged_in_admin},
-            },
-        };
+        use crate::common::client::Client;
+        use crate::common::contexts::category::asserts::assert_deleted_category_response;
+        use crate::common::contexts::category::fixtures::random_category_name;
+        use crate::common::contexts::category::forms::{AddCategoryForm, DeleteCategoryForm};
+        use crate::e2e::environment::TestEnv;
+        use crate::e2e::web::api::v1::contexts::category::steps::add_random_category;
+        use crate::e2e::web::api::v1::contexts::user::steps::new_logged_in_admin;
 
         #[tokio::test]
         async fn it_should_allow_admins_to_add_new_categories() {
