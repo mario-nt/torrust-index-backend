@@ -140,7 +140,7 @@ mod authorization {
         use crate::e2e::web::api::v1::contexts::category::steps::add_random_category;
 
         #[tokio::test]
-        async fn it_should_not_allow_guest_users_to_add_tags() {
+        async fn it_should_not_allow_guest_users_to_add_categories() {
             let mut env = TestEnv::new();
             env.start(api::Version::V1).await;
 
