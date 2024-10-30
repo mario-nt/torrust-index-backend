@@ -3904,7 +3904,6 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-server",
- "binascii",
  "bittorrent-primitives",
  "bytes",
  "camino",
