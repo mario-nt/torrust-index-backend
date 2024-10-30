@@ -96,6 +96,7 @@ tracing-subscriber = { version = "0", features = ["json"] }
 url = { version = "2", features = ["serde"] }
 urlencoding = "2"
 uuid = { version = "1", features = ["v4"] }
+bittorrent-primitives = "0.1.0"
 
 [dev-dependencies]
 tempfile = "3"
