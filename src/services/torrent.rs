@@ -1,6 +1,7 @@
 //! Torrent service.
 use std::sync::Arc;
 
+use bittorrent_primitives::info_hash::InfoHash;
 use serde_derive::{Deserialize, Serialize};
 use tracing::debug;
 use url::Url;
@@ -11,7 +12,6 @@ use crate::config::Configuration;
 use crate::databases::database::{Database, Error, Sorting};
 use crate::errors::ServiceError;
 use crate::models::category::CategoryId;
-use crate::models::info_hash::InfoHash;
 use crate::models::response::{DeletedTorrentResponse, TorrentResponse, TorrentsResponse};
 use crate::models::torrent::{Metadata, TorrentId, TorrentListing};
 use crate::models::torrent_file::{DbTorrent, Torrent, TorrentFile};

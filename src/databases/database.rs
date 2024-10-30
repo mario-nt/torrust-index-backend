@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use bittorrent_primitives::info_hash::InfoHash;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -6,7 +7,6 @@ use url::Url;
 use crate::databases::mysql::Mysql;
 use crate::databases::sqlite::Sqlite;
 use crate::models::category::CategoryId;
-use crate::models::info_hash::InfoHash;
 use crate::models::response::TorrentsResponse;
 use crate::models::torrent::{Metadata, TorrentListing};
 use crate::models::torrent_file::{DbTorrent, Torrent, TorrentFile};
