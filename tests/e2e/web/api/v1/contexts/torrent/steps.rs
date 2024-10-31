@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use torrust_index::models::info_hash::InfoHash;
+use bittorrent_primitives::info_hash::InfoHash;
 use torrust_index::web::api::server::v1::responses::ErrorResponseData;
 
 use crate::common::client::Client;

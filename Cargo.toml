@@ -40,7 +40,7 @@ argon2 = "0"
 async-trait = "0"
 axum = { version = "0", features = ["multipart"] }
 axum-server = { version = "0", features = ["tls-rustls"] }
-binascii = "0"
+bittorrent-primitives = "0.1.0"
 bytes = "1"
 camino = { version = "1", features = ["serde"] }
 casbin = "2"
@@ -102,7 +102,7 @@ tempfile = "3"
 which = "6"
 
 [package.metadata.cargo-machete]
-ignored = ["sha-1", "futures"]
+ignored = ["futures", "sha-1"]
 
 [lints.clippy]
 complexity = { level = "deny", priority = -1 }

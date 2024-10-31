@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use bittorrent_primitives::info_hash::InfoHash;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{query, query_as, Acquire, ConnectOptions, SqlitePool};
@@ -11,7 +12,6 @@ use super::database::TABLES_TO_TRUNCATE;
 use crate::databases::database;
 use crate::databases::database::{Category, Database, Driver, Sorting, TorrentCompact};
 use crate::models::category::CategoryId;
-use crate::models::info_hash::InfoHash;
 use crate::models::response::TorrentsResponse;
 use crate::models::torrent::{Metadata, TorrentListing};
 use crate::models::torrent_file::{
