@@ -15,31 +15,31 @@ use crate::models::user::UserId;
 #[derive(Debug, Display, PartialEq, Eq, Error)]
 #[allow(dead_code)]
 pub enum TrackerAPIError {
-    #[display(fmt = "Error with tracker request: {error}.")]
+    #[display("Error with tracker request: {error}.")]
     TrackerOffline { error: String },
 
-    #[display(fmt = "Invalid token for tracker API. Check the tracker token in settings.")]
+    #[display("Invalid token for tracker API. Check the tracker token in settings.")]
     InvalidToken,
 
-    #[display(fmt = "Tracker returned an internal server error.")]
+    #[display("Tracker returned an internal server error.")]
     InternalServerError,
 
-    #[display(fmt = "Tracker returned a not found error.")]
+    #[display("Tracker returned a not found error.")]
     NotFound,
 
-    #[display(fmt = "Tracker returned an unexpected response status.")]
+    #[display("Tracker returned an unexpected response status.")]
     UnexpectedResponseStatus,
 
-    #[display(fmt = "Could not save the newly generated user key into the database.")]
+    #[display("Could not save the newly generated user key into the database.")]
     CannotSaveUserKey,
 
-    #[display(fmt = "Torrent not found.")]
+    #[display("Torrent not found.")]
     TorrentNotFound,
 
-    #[display(fmt = "Expected body in tracker response, received empty body.")]
+    #[display("Expected body in tracker response, received empty body.")]
     MissingResponseBody,
 
-    #[display(fmt = "Expected body in tracker response, received empty body.")]
+    #[display("Expected body in tracker response, received empty body.")]
     FailedToParseTrackerResponse { body: String },
 }
 

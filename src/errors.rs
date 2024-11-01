@@ -14,167 +14,165 @@ pub type ServiceResult<V> = Result<V, ServiceError>;
 #[derive(Debug, Display, PartialEq, Eq, Error)]
 #[allow(dead_code)]
 pub enum ServiceError {
-    #[display(fmt = "internal server error")]
+    #[display("internal server error")]
     InternalServerError,
 
-    #[display(fmt = "This server is is closed for registration. Contact admin if this is unexpected")]
+    #[display("This server is is closed for registration. Contact admin if this is unexpected")]
     ClosedForRegistration,
 
-    #[display(fmt = "Email is required")] //405j
+    #[display("Email is required")] //405j
     EmailMissing,
-    #[display(fmt = "Please enter a valid email address")] //405j
+    #[display("Please enter a valid email address")] //405j
     EmailInvalid,
 
-    #[display(fmt = "The value you entered for URL is not a URL")] //405j
+    #[display("The value you entered for URL is not a URL")] //405j
     NotAUrl,
 
-    #[display(fmt = "Invalid username/email or password")]
+    #[display("Invalid username/email or password")]
     WrongPasswordOrUsername,
-    #[display(fmt = "Invalid password")]
+    #[display("Invalid password")]
     InvalidPassword,
-    #[display(fmt = "Username not found")]
+    #[display("Username not found")]
     UsernameNotFound,
-    #[display(fmt = "User not found")]
+    #[display("User not found")]
     UserNotFound,
 
-    #[display(fmt = "Account not found")]
+    #[display("Account not found")]
     AccountNotFound,
 
     /// when the value passed contains profanity
-    #[display(fmt = "Can't allow profanity in usernames")]
+    #[display("Can't allow profanity in usernames")]
     ProfanityError,
     /// when the value passed contains blacklisted words
     /// see [blacklist](https://github.com/shuttlecraft/The-Big-Username-Blacklist)
-    #[display(fmt = "Username contains blacklisted words")]
+    #[display("Username contains blacklisted words")]
     BlacklistError,
     /// when the value passed contains characters not present
     /// in [UsernameCaseMapped](https://tools.ietf.org/html/rfc8265#page-7)
     /// profile
-    #[display(fmt = "username_case_mapped violation")]
+    #[display("username_case_mapped violation")]
     UsernameCaseMappedError,
 
-    #[display(fmt = "Password too short")]
+    #[display("Password too short")]
     PasswordTooShort,
-    #[display(fmt = "Password too long")]
+    #[display("Password too long")]
     PasswordTooLong,
-    #[display(fmt = "Passwords don't match")]
+    #[display("Passwords don't match")]
     PasswordsDontMatch,
 
     /// when the a username is already taken
-    #[display(fmt = "Username not available")]
+    #[display("Username not available")]
     UsernameTaken,
 
-    #[display(fmt = "Invalid username. Usernames must consist of 1-20 alphanumeric characters, dashes, or underscore")]
+    #[display("Invalid username. Usernames must consist of 1-20 alphanumeric characters, dashes, or underscore")]
     UsernameInvalid,
 
     /// email is already taken
-    #[display(fmt = "Email not available")]
+    #[display("Email not available")]
     EmailTaken,
 
-    #[display(fmt = "Please verify your email before logging in")]
+    #[display("Please verify your email before logging in")]
     EmailNotVerified,
 
     /// when the a token name is already taken
     /// token not found
-    #[display(fmt = "Token not found. Please sign in.")]
+    #[display("Token not found. Please sign in.")]
     TokenNotFound,
 
     /// token expired
-    #[display(fmt = "Token expired. Please sign in again.")]
+    #[display("Token expired. Please sign in again.")]
     TokenExpired,
 
-    #[display(fmt = "Token invalid.")]
+    #[display("Token invalid.")]
     /// token invalid
     TokenInvalid,
 
-    #[display(fmt = "Uploaded torrent is not valid.")]
+    #[display("Uploaded torrent is not valid.")]
     InvalidTorrentFile,
 
-    #[display(fmt = "Uploaded torrent has an invalid pieces key.")]
+    #[display("Uploaded torrent has an invalid pieces key.")]
     InvalidTorrentPiecesLength,
 
-    #[display(fmt = "Only .torrent files can be uploaded.")]
+    #[display("Only .torrent files can be uploaded.")]
     InvalidFileType,
 
-    #[display(fmt = "Torrent title is too short.")]
+    #[display("Torrent title is too short.")]
     InvalidTorrentTitleLength,
 
-    #[display(fmt = "Some mandatory metadata fields are missing.")]
+    #[display("Some mandatory metadata fields are missing.")]
     MissingMandatoryMetadataFields,
 
-    #[display(fmt = "Selected category does not exist.")]
+    #[display("Selected category does not exist.")]
     InvalidCategory,
 
-    #[display(fmt = "Selected tag does not exist.")]
+    #[display("Selected tag does not exist.")]
     InvalidTag,
 
-    #[display(fmt = "Unauthorized action.")]
+    #[display("Unauthorized action.")]
     UnauthorizedAction,
 
-    #[display(
-        fmt = "Unauthorized actions for guest users. Try logging in to check if you have permission to perform the action"
-    )]
+    #[display("Unauthorized actions for guest users. Try logging in to check if you have permission to perform the action")]
     UnauthorizedActionForGuests,
 
-    #[display(fmt = "This torrent already exists in our database.")]
+    #[display("This torrent already exists in our database.")]
     InfoHashAlreadyExists,
 
-    #[display(fmt = "A torrent with the same canonical infohash already exists in our database.")]
+    #[display("A torrent with the same canonical infohash already exists in our database.")]
     CanonicalInfoHashAlreadyExists,
 
-    #[display(fmt = "A torrent with the same original infohash already exists in our database.")]
+    #[display("A torrent with the same original infohash already exists in our database.")]
     OriginalInfoHashAlreadyExists,
 
-    #[display(fmt = "This torrent title has already been used.")]
+    #[display("This torrent title has already been used.")]
     TorrentTitleAlreadyExists,
 
-    #[display(fmt = "Could not whitelist torrent.")]
+    #[display("Could not whitelist torrent.")]
     WhitelistingError,
 
-    #[display(fmt = "Failed to send verification email.")]
+    #[display("Failed to send verification email.")]
     FailedToSendVerificationEmail,
 
-    #[display(fmt = "Category already exists.")]
+    #[display("Category already exists.")]
     CategoryAlreadyExists,
 
-    #[display(fmt = "Category name cannot be empty.")]
+    #[display("Category name cannot be empty.")]
     CategoryNameEmpty,
 
-    #[display(fmt = "Tag already exists.")]
+    #[display("Tag already exists.")]
     TagAlreadyExists,
 
-    #[display(fmt = "Tag name cannot be empty.")]
+    #[display("Tag name cannot be empty.")]
     TagNameEmpty,
 
-    #[display(fmt = "Torrent not found.")]
+    #[display("Torrent not found.")]
     TorrentNotFound,
 
-    #[display(fmt = "Category not found.")]
+    #[display("Category not found.")]
     CategoryNotFound,
 
-    #[display(fmt = "Tag not found.")]
+    #[display("Tag not found.")]
     TagNotFound,
 
-    #[display(fmt = "Database error.")]
+    #[display("Database error.")]
     DatabaseError,
 
-    #[display(fmt = "Authentication error, please sign in")]
+    #[display("Authentication error, please sign in")]
     LoggedInUserNotFound,
 
     // Begin tracker errors
-    #[display(fmt = "Sorry, we have an error with our tracker connection.")]
+    #[display("Sorry, we have an error with our tracker connection.")]
     TrackerOffline,
 
-    #[display(fmt = "Tracker response error. The operation could not be performed.")]
+    #[display("Tracker response error. The operation could not be performed.")]
     TrackerResponseError,
 
-    #[display(fmt = "Tracker unknown response. Unexpected response from tracker. For example, if it can't be parsed.")]
+    #[display("Tracker unknown response. Unexpected response from tracker. For example, if it can't be parsed.")]
     TrackerUnknownResponse,
 
-    #[display(fmt = "Torrent not found in tracker.")]
+    #[display("Torrent not found in tracker.")]
     TorrentNotFoundInTracker,
 
-    #[display(fmt = "Invalid tracker API token.")]
+    #[display("Invalid tracker API token.")]
     InvalidTrackerToken,
     // End tracker errors
 }

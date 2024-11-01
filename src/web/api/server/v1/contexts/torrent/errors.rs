@@ -6,33 +6,31 @@ use crate::web::api::server::v1::responses::{json_error_response, ErrorResponseD
 
 #[derive(Debug, Display, PartialEq, Eq, Error)]
 pub enum Request {
-    #[display(fmt = "torrent title bytes are nota valid UTF8 string.")]
+    #[display("torrent title bytes are nota valid UTF8 string.")]
     TitleIsNotValidUtf8,
 
-    #[display(fmt = "torrent description bytes are nota valid UTF8 string.")]
+    #[display("torrent description bytes are nota valid UTF8 string.")]
     DescriptionIsNotValidUtf8,
 
-    #[display(fmt = "torrent category bytes are nota valid UTF8 string.")]
+    #[display("torrent category bytes are nota valid UTF8 string.")]
     CategoryIsNotValidUtf8,
 
-    #[display(fmt = "torrent tags arrays bytes are nota valid UTF8 string array.")]
+    #[display("torrent tags arrays bytes are nota valid UTF8 string array.")]
     TagsArrayIsNotValidUtf8,
 
-    #[display(fmt = "torrent tags string is not a valid JSON.")]
+    #[display("torrent tags string is not a valid JSON.")]
     TagsArrayIsNotValidJson,
 
-    #[display(
-        fmt = "upload torrent request header `content-type` should be preferably `application/x-bittorrent` or `application/octet-stream`."
-    )]
+    #[display("upload torrent request header `content-type` should be preferably `application/x-bittorrent` or `application/octet-stream`.")]
     InvalidFileType,
 
-    #[display(fmt = "cannot write uploaded torrent bytes (binary file) into memory.")]
+    #[display("cannot write uploaded torrent bytes (binary file) into memory.")]
     CannotWriteChunkFromUploadedBinary,
 
-    #[display(fmt = "cannot read a chunk of bytes from the uploaded torrent file. Review the request body size limit.")]
+    #[display("cannot read a chunk of bytes from the uploaded torrent file. Review the request body size limit.")]
     CannotReadChunkFromUploadedBinary,
 
-    #[display(fmt = "provided path param for Info-hash is not valid.")]
+    #[display("provided path param for Info-hash is not valid.")]
     InvalidInfoHashParam,
 }
 

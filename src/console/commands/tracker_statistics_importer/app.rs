@@ -38,7 +38,7 @@ const NUMBER_OF_ARGUMENTS: usize = 0;
 #[derive(Debug, Display, PartialEq, Error)]
 #[allow(dead_code)]
 pub enum ImportError {
-    #[display(fmt = "internal server error")]
+    #[display("internal server error")]
     WrongNumberOfArgumentsError,
 }
 
