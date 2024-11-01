@@ -32,10 +32,10 @@ pub struct TorrentListing {
 
 #[derive(Debug, Display, PartialEq, Eq, Error)]
 pub enum MetadataError {
-    #[display(fmt = "Missing mandatory torrent title.")]
+    #[display("Missing mandatory torrent title.")]
     MissingTorrentTitle,
 
-    #[display(fmt = "Torrent title is too short.")]
+    #[display("Torrent title is too short.")]
     InvalidTorrentTitleLength,
 }
 

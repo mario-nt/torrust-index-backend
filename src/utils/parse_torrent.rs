@@ -4,23 +4,23 @@ use bittorrent_primitives::info_hash::InfoHash;
 use derive_more::{Display, Error};
 use serde::{Deserialize, Serialize};
 use serde_bencode::value::Value;
-use serde_bencode::{de, Error};
+use serde_bencode::{de, Error as SerdeError};
 use sha1::{Digest, Sha1};
 
 use crate::models::torrent_file::Torrent;
 
 #[derive(Debug, Display, PartialEq, Eq, Error)]
 pub enum DecodeTorrentFileError {
-    #[display(fmt = "Torrent data could not be decoded from the bencoded format.")]
+    #[display("Torrent data could not be decoded from the bencoded format.")]
     InvalidBencodeData,
 
-    #[display(fmt = "Torrent info dictionary key could not be decoded from the bencoded format.")]
+    #[display("Torrent info dictionary key could not be decoded from the bencoded format.")]
     InvalidInfoDictionary,
 
-    #[display(fmt = "Torrent has an invalid pieces key length. It should be a multiple of 20.")]
+    #[display("Torrent has an invalid pieces key length. It should be a multiple of 20.")]
     InvalidTorrentPiecesLength,
 
-    #[display(fmt = "Cannot bencode the parsed `info` dictionary again to generate the info-hash.")]
+    #[display("Cannot bencode the parsed `info` dictionary again to generate the info-hash.")]
     CannotBencodeInfoDict,
 }
 
@@ -72,7 +72,7 @@ pub fn decode_torrent(bytes: &[u8]) -> Result<Torrent, Box<dyn error::Error>> {
 /// # Errors
 ///
 /// This function will return an error if unable to bencode torrent.
-pub fn encode_torrent(torrent: &Torrent) -> Result<Vec<u8>, Error> {
+pub fn encode_torrent(torrent: &Torrent) -> Result<Vec<u8>, SerdeError> {
     match serde_bencode::to_bytes(torrent) {
         Ok(bencode_bytes) => Ok(bencode_bytes),
         Err(e) => {
