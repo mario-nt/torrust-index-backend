@@ -339,7 +339,7 @@ mod authorization {
             assert_eq!(response.status, 200);
         }
         #[tokio::test]
-        async fn it_should_not_allow_a_registered_to_ban_a_user() {
+        async fn it_should_not_allow_a_registered_user_to_ban_a_user() {
             let mut env = TestEnv::new();
             env.start(api::Version::V1).await;
 
@@ -352,6 +352,77 @@ mod authorization {
             let response = client.ban_user(Username::new(registered_user.username.clone())).await;
 
             assert_eq!(response.status, 403);
+        }
+    }
+    mod for_admin_users {
+        use torrust_index::web::api;
+
+        use crate::common::client::Client;
+        use crate::common::contexts::user::fixtures::{DEFAULT_PASSWORD, VALID_PASSWORD};
+        use crate::common::contexts::user::forms::{ChangePasswordForm, RegistrationForm, Username};
+        use crate::e2e::environment::TestEnv;
+        use crate::e2e::web::api::v1::contexts::user::steps::{new_logged_in_admin, new_registered_user};
+
+        #[tokio::test]
+        async fn it_should_not_allow_an_admin_user_to_register() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_admin.token);
+
+            let response = client
+                .register_user(RegistrationForm {
+                    username: logged_in_admin.username,
+                    email: Some("test@email.com".to_string()),
+                    password: VALID_PASSWORD.to_string(),
+                    confirm_password: VALID_PASSWORD.to_string(),
+                })
+                .await;
+
+            assert_eq!(response.status, 400);
+        }
+
+        #[tokio::test]
+        async fn it_should_allow_admin_users_to_change_their_passwords() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_admin.token);
+
+            let new_password = VALID_PASSWORD.to_string();
+
+            let response = client
+                .change_password(
+                    Username::new(logged_in_admin.username.clone()),
+                    ChangePasswordForm {
+                        current_password: DEFAULT_PASSWORD.to_string(),
+                        password: new_password.clone(),
+                        confirm_password: new_password.clone(),
+                    },
+                )
+                .await;
+
+            assert_eq!(response.status, 200);
+        }
+
+        #[tokio::test]
+        async fn it_should_allow_an_admin_to_ban_a_user() {
+            let mut env = TestEnv::new();
+            env.start(api::Version::V1).await;
+
+            let logged_in_admin = new_logged_in_admin(&env).await;
+
+            let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_in_admin.token);
+
+            let registered_user = new_registered_user(&env).await;
+
+            let response = client.ban_user(Username::new(registered_user.username.clone())).await;
+
+            assert_eq!(response.status, 200);
         }
     }
 }
