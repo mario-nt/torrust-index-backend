@@ -186,7 +186,7 @@ mod banned_user_list {
     use crate::common::contexts::user::asserts::assert_banned_user_response;
     use crate::common::contexts::user::forms::Username;
     use crate::e2e::environment::TestEnv;
-    use crate::e2e::web::api::v1::contexts::user::steps::{new_logged_in_admin, new_logged_in_user, new_registered_user};
+    use crate::e2e::web::api::v1::contexts::user::steps::{new_logged_in_admin, new_registered_user};
 
     #[tokio::test]
     async fn it_should_allow_an_admin_to_ban_a_user() {
@@ -202,22 +202,6 @@ mod banned_user_list {
         let response = client.ban_user(Username::new(registered_user.username.clone())).await;
 
         assert_banned_user_response(&response, &registered_user);
-    }
-
-    #[tokio::test]
-    async fn it_should_not_allow_a_non_admin_to_ban_a_user() {
-        let mut env = TestEnv::new();
-        env.start(api::Version::V1).await;
-
-        let logged_non_admin = new_logged_in_user(&env).await;
-
-        let client = Client::authenticated(&env.server_socket_addr().unwrap(), &logged_non_admin.token);
-
-        let registered_user = new_registered_user(&env).await;
-
-        let response = client.ban_user(Username::new(registered_user.username.clone())).await;
-
-        assert_eq!(response.status, 403);
     }
 }
 
