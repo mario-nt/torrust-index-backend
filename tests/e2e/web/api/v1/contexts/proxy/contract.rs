@@ -7,7 +7,7 @@ mod authorization {
     use crate::common::contexts::torrent::fixtures::random_torrent;
     use crate::e2e::environment::TestEnv;
     use crate::e2e::web::api::v1::contexts::torrent::steps::upload_torrent;
-    use crate::e2e::web::api::v1::contexts::user::steps::new_logged_in_user;
+    use crate::e2e::web::api::v1::contexts::user::steps::{new_logged_in_admin, new_logged_in_user};
 
     #[tokio::test]
     async fn it_should_return_an_ok_response_when_a_guest_user_tries_to_get_a_proxied_image_by_url() {
