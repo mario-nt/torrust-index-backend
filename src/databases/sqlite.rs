@@ -156,6 +156,13 @@ impl Database for Sqlite {
             .map_err(|_| database::Error::UserNotFound)
     }
 
+    async fn get_user_profiles(&self) -> Result<Vec<UserProfile>, database::Error> {
+        query_as::<_, UserProfile>("SELECT * FROM torrust_user_profiles")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|_| database::Error::Error)
+    }
+
     async fn get_user_compact_from_id(&self, user_id: i64) -> Result<UserCompact, database::Error> {
         query_as::<_, UserCompact>("SELECT tu.user_id, tp.username, tu.administrator FROM torrust_users tu INNER JOIN torrust_user_profiles tp ON tu.user_id = tp.user_id WHERE tu.user_id = ?")
             .bind(user_id)

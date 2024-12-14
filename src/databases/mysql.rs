@@ -148,11 +148,18 @@ impl Database for Mysql {
     }
 
     async fn get_user_profile_from_username(&self, username: &str) -> Result<UserProfile, database::Error> {
-        query_as::<_, UserProfile>(r#"SELECT user_id, username, COALESCE(email, "") as email, email_verified, COALESCE(bio, "") as bio, COALESCE(avatar, "") as avatar FROM torrust_user_profiles WHERE username = ?"#)
+        query_as::<_, UserProfile>(r#"SELECT user_id, username, COALESCE(email, "") as email FROM torrust_user_profiles"#)
             .bind(username)
             .fetch_one(&self.pool)
             .await
             .map_err(|_| database::Error::UserNotFound)
+    }
+
+    async fn get_user_profiles(&self) -> Result<Vec<UserProfile>, database::Error> {
+        query_as::<_, UserProfile>(r#"SELECT * FROM torrust_user_profiles"#)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|_| database::Error::Error)
     }
 
     async fn get_user_compact_from_id(&self, user_id: i64) -> Result<UserCompact, database::Error> {

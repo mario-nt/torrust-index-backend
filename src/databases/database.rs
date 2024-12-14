@@ -143,6 +143,9 @@ pub trait Database: Sync + Send {
     /// Get `UserProfile` from `username`.
     async fn get_user_profile_from_username(&self, username: &str) -> Result<UserProfile, Error>;
 
+    /// Get all user profiles as `Vec<UserProfile>`.
+    async fn get_user_profiles(&self) -> Result<Vec<UserProfile>, Error>;
+
     /// Get `UserCompact` from `user_id`.
     async fn get_user_compact_from_id(&self, user_id: i64) -> Result<UserCompact, Error>;
 
