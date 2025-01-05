@@ -412,6 +412,15 @@ impl DbUserProfileRepository {
     pub async fn get_user_profile_from_username(&self, username: &str) -> Result<UserProfile, Error> {
         self.database.get_user_profile_from_username(username).await
     }
+
+    /// It gets all the user profiles for all the users.
+    ///
+    /// # Errors
+    ///
+    /// It returns an error if there is a database error.
+    pub async fn get_all_user_profiles(&self) -> Result<Vec<UserProfile>, Error> {
+        self.database.get_user_profiles().await
+    }
 }
 
 pub struct DbBannedUserList {
