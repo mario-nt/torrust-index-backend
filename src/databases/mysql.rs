@@ -156,7 +156,7 @@ impl Database for Mysql {
     }
 
     async fn get_user_profiles(&self) -> Result<Vec<UserProfile>, database::Error> {
-        query_as::<_, UserProfile>(r#"SELECT * FROM torrust_user_profiles"#)
+        query_as::<_, UserProfile>(r"SELECT * FROM torrust_user_profiles")
             .fetch_all(&self.pool)
             .await
             .map_err(|_| database::Error::Error)
