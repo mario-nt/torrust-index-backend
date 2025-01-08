@@ -7,8 +7,8 @@ use axum::routing::{delete, get, post};
 use axum::Router;
 
 use super::handlers::{
-    ban_handler, change_password_handler, email_verification_handler, login_handler, registration_handler, renew_token_handler,
-    verify_token_handler,
+    ban_handler, change_password_handler, email_verification_handler, get_all_handler, login_handler, registration_handler,
+    renew_token_handler, verify_token_handler,
 };
 use crate::common::AppData;
 
@@ -37,4 +37,9 @@ pub fn router(app_data: Arc<AppData>) -> Router {
         // User ban
         // code-review: should not this be a POST method? We add the user to the blacklist. We do not delete the user.
         .route("/ban/:user", delete(ban_handler).with_state(app_data))
+}
+
+/// Routes for the [`user`](crate::web::api::server::v1::contexts::user) API context.
+pub fn router_for_multiple_resources(app_data: Arc<AppData>) -> Router {
+    Router::new().route("/", get(get_all_handler).with_state(app_data))
 }

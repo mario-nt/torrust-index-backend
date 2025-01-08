@@ -52,6 +52,7 @@ pub struct AppData {
     pub profile_service: Arc<user::ProfileService>,
     pub ban_service: Arc<user::BanService>,
     pub about_service: Arc<about::Service>,
+    pub listing_service: Arc<user::ListingService>,
 }
 
 impl AppData {
@@ -90,6 +91,7 @@ impl AppData {
         profile_service: Arc<user::ProfileService>,
         ban_service: Arc<user::BanService>,
         about_service: Arc<about::Service>,
+        listing_service: Arc<user::ListingService>,
     ) -> AppData {
         AppData {
             cfg,
@@ -125,6 +127,7 @@ impl AppData {
             profile_service,
             ban_service,
             about_service,
+            listing_service,
         }
     }
 }

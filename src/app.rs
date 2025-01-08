@@ -160,6 +160,12 @@ pub async fn run(configuration: Configuration, api_version: &Version) -> Running
 
     let about_service = Arc::new(about::Service::new(authorization_service.clone()));
 
+    let listing_service = Arc::new(user::ListingService::new(
+        user_profile_repository.clone(),
+        authorization_service.clone(),
+    ))
+    .clone();
+
     // Build app container
 
     let app_data = Arc::new(AppData::new(
@@ -194,6 +200,7 @@ pub async fn run(configuration: Configuration, api_version: &Version) -> Running
         profile_service,
         ban_service,
         about_service,
+        listing_service,
     ));
 
     // Start cronjob to import tracker torrent data and updating
