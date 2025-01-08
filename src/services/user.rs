@@ -321,6 +321,39 @@ impl BanService {
     }
 }
 
+pub struct ListingService {
+    user_profile_repository: Arc<DbUserProfileRepository>,
+    authorization_service: Arc<authorization::Service>,
+}
+
+impl ListingService {
+    #[must_use]
+    pub fn new(
+        user_profile_repository: Arc<DbUserProfileRepository>,
+        authorization_service: Arc<authorization::Service>,
+    ) -> Self {
+        Self {
+            user_profile_repository,
+            authorization_service,
+        }
+    }
+
+    /// Gets all users.
+    ///
+    /// # Errors
+    ///
+    /// This function will return a:
+    ///
+    /// * There is a database error retrieving the users
+    pub async fn get_all(&self, maybe_user_id: Option<UserId>) -> Result<Vec<UserProfile>, ServiceError> {
+        self.authorization_service.authorize(ACTION::GetUsers, maybe_user_id).await?;
+
+        let users = self.user_profile_repository.get_all_user_profiles().await?;
+
+        Ok(users)
+    }
+}
+
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Repository: Sync + Send {
