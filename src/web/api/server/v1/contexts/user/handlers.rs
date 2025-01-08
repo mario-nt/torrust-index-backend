@@ -186,7 +186,7 @@ fn api_base_url(host: &str) -> String {
 ///
 /// It returns:
 ///
-/// - `200` response with a json containing a list with all the users and their profiles [`Vec<UserProfile>`](crate::models::torrent_tag::UserProfile).
+/// - `200` response with a json containing a list with all the users and their profiles [`Vec<UserProfile>`](crate::models::user::UserProfile).
 /// - Other error status codes if there is a database error.
 ///
 /// Refer to the [API endpoint documentation](crate::web::api::server::v1::contexts::user)
