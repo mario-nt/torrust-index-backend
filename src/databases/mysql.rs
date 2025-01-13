@@ -148,7 +148,7 @@ impl Database for Mysql {
     }
 
     async fn get_user_profile_from_username(&self, username: &str) -> Result<UserProfile, database::Error> {
-        query_as::<_, UserProfile>(r#"SELECT user_id, username, COALESCE(email, "") as email FROM torrust_user_profiles"#)
+        query_as::<_, UserProfile>(r#"SELECT user_id, username, COALESCE(email, "") as email, email_verified, COALESCE(bio, "") as bio, COALESCE(avatar, "") as avatar FROM torrust_user_profiles WHERE username = ?"#)
             .bind(username)
             .fetch_one(&self.pool)
             .await
