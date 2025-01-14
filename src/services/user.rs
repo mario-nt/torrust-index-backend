@@ -344,7 +344,9 @@ impl ListingService {
     ///
     /// This function will return a error if there is a database error retrieving the profiles:
     pub async fn get_user_profiles(&self, maybe_user_id: Option<UserId>) -> Result<Vec<UserProfile>, ServiceError> {
-        self.authorization_service.authorize(ACTION::GetUsers, maybe_user_id).await?;
+        self.authorization_service
+            .authorize(ACTION::GetUserProfiles, maybe_user_id)
+            .await?;
 
         let users = self.user_profile_repository.get_all_user_profiles().await?;
 
