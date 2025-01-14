@@ -182,11 +182,11 @@ fn api_base_url(host: &str) -> String {
     format!("http://{host}")
 }
 
-/// It handles the request to get all the users.
+/// It handles the request to get all the user profiles.
 ///
 /// It returns:
 ///
-/// - `200` response with a json containing a list with all the users and their profiles [`Vec<UserProfile>`](crate::models::user::UserProfile).
+/// - `200` response with a json containing a list with all the user profiles [`Vec<UserProfile>`](crate::models::user::UserProfile).
 /// - Other error status codes if there is a database error.
 ///
 /// Refer to the [API endpoint documentation](crate::web::api::server::v1::contexts::user)
@@ -199,11 +199,11 @@ fn api_base_url(host: &str) -> String {
 /// There is a problem authorizing the action.
 /// The user is not authorized to perform the action
 #[allow(clippy::unused_async)]
-pub async fn get_all_handler(
+pub async fn get_user_profiles_handler(
     State(app_data): State<Arc<AppData>>,
     ExtractOptionalLoggedInUser(maybe_user_id): ExtractOptionalLoggedInUser,
 ) -> Response {
-    match app_data.listing_service.get_all(maybe_user_id).await {
+    match app_data.listing_service.get_user_profiles(maybe_user_id).await {
         Ok(users) => Json(crate::web::api::server::v1::responses::OkResponseData { data: users }).into_response(),
         Err(error) => error.into_response(),
     }

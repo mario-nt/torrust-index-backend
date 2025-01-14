@@ -7,8 +7,8 @@ use axum::routing::{delete, get, post};
 use axum::Router;
 
 use super::handlers::{
-    ban_handler, change_password_handler, email_verification_handler, get_all_handler, login_handler, registration_handler,
-    renew_token_handler, verify_token_handler,
+    ban_handler, change_password_handler, email_verification_handler, get_user_profiles_handler, login_handler,
+    registration_handler, renew_token_handler, verify_token_handler,
 };
 use crate::common::AppData;
 
@@ -41,5 +41,5 @@ pub fn router(app_data: Arc<AppData>) -> Router {
 
 /// Routes for the [`user`](crate::web::api::server::v1::contexts::user) API context.
 pub fn router_for_multiple_resources(app_data: Arc<AppData>) -> Router {
-    Router::new().route("/", get(get_all_handler).with_state(app_data))
+    Router::new().route("/", get(get_user_profiles_handler).with_state(app_data))
 }
