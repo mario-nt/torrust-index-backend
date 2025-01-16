@@ -348,9 +348,9 @@ impl ListingService {
             .authorize(ACTION::GetUserProfiles, maybe_user_id)
             .await?;
 
-        let users = self.user_profile_repository.get_all_user_profiles().await?;
+        let user_profiles = self.user_profile_repository.get_all_user_profiles().await?;
 
-        Ok(users)
+        Ok(user_profiles)
     }
 }
 
