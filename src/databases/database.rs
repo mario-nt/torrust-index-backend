@@ -7,7 +7,7 @@ use url::Url;
 use crate::databases::mysql::Mysql;
 use crate::databases::sqlite::Sqlite;
 use crate::models::category::CategoryId;
-use crate::models::response::TorrentsResponse;
+use crate::models::response::{TorrentsResponse, UserProfilesResponse};
 use crate::models::torrent::{Metadata, TorrentListing};
 use crate::models::torrent_file::{DbTorrent, Torrent, TorrentFile};
 use crate::models::torrent_tag::{TagId, TorrentTag};
@@ -143,8 +143,8 @@ pub trait Database: Sync + Send {
     /// Get `UserProfile` from `username`.
     async fn get_user_profile_from_username(&self, username: &str) -> Result<UserProfile, Error>;
 
-    /// Get all user profiles as `Vec<UserProfile>`.
-    async fn get_user_profiles(&self) -> Result<Vec<UserProfile>, Error>;
+    /// Get all user profiles in a paginated form as `UserProfilesResponse`.
+    async fn get_user_profiles_paginated(&self, offset: u64, page_size: u8) -> Result<UserProfilesResponse, Error>;
 
     /// Get `UserCompact` from `user_id`.
     async fn get_user_compact_from_id(&self, user_id: i64) -> Result<UserCompact, Error>;

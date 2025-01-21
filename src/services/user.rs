@@ -8,6 +8,7 @@ use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 #[cfg(test)]
 use mockall::automock;
 use pbkdf2::password_hash::rand_core::OsRng;
+use serde_derive::Deserialize;
 use tracing::{debug, info};
 
 use super::authentication::DbUserAuthenticationRepository;
@@ -17,6 +18,7 @@ use crate::databases::database::{Database, Error};
 use crate::errors::ServiceError;
 use crate::mailer;
 use crate::mailer::VerifyClaims;
+use crate::models::response::UserProfilesResponse;
 use crate::models::user::{UserCompact, UserId, UserProfile, Username};
 use crate::services::authentication::verify_password;
 use crate::utils::validation::validate_email_address;
@@ -27,6 +29,20 @@ use crate::web::api::server::v1::contexts::user::forms::{ChangePasswordForm, Reg
 /// that purpose.
 fn no_email() -> String {
     String::new()
+}
+
+/// User request to generate a user profile listing.
+#[derive(Debug, Deserialize)]
+pub struct ListingRequest {
+    pub page_size: Option<u8>,
+    pub page: Option<u32>,
+}
+
+/// Internal specification for user profiles listings.
+#[derive(Debug, Deserialize)]
+pub struct ListingSpecification {
+    pub offset: u64,
+    pub page_size: u8,
 }
 
 pub struct RegistrationService {
@@ -322,6 +338,7 @@ impl BanService {
 }
 
 pub struct ListingService {
+    configuration: Arc<Configuration>,
     user_profile_repository: Arc<DbUserProfileRepository>,
     authorization_service: Arc<authorization::Service>,
 }
@@ -329,28 +346,62 @@ pub struct ListingService {
 impl ListingService {
     #[must_use]
     pub fn new(
+        configuration: Arc<Configuration>,
         user_profile_repository: Arc<DbUserProfileRepository>,
         authorization_service: Arc<authorization::Service>,
     ) -> Self {
         Self {
+            configuration,
             user_profile_repository,
             authorization_service,
         }
     }
 
-    /// Returns a list of all the user profiles.
+    /// Returns a list of all the user profiles matching the search criteria.
     ///
     /// # Errors
     ///
-    /// This function will return a error if there is a database error retrieving the profiles:
-    pub async fn get_user_profiles(&self, maybe_user_id: Option<UserId>) -> Result<Vec<UserProfile>, ServiceError> {
+    /// Returns a `ServiceError::DatabaseError` if the database query fails.
+    pub async fn generate_user_profile_listing(
+        &self,
+        request: &ListingRequest,
+        maybe_user_id: Option<UserId>,
+    ) -> Result<UserProfilesResponse, ServiceError> {
         self.authorization_service
-            .authorize(ACTION::GetUserProfiles, maybe_user_id)
+            .authorize(ACTION::GenerateUserProfilesListing, maybe_user_id)
             .await?;
 
-        let user_profiles = self.user_profile_repository.get_all_user_profiles().await?;
+        let user_profile_listing_specification = self.listing_specification_from_user_request(request).await;
 
-        Ok(user_profiles)
+        let user_profiles_response = self
+            .user_profile_repository
+            .generate_listing(&user_profile_listing_specification)
+            .await?;
+
+        Ok(user_profiles_response)
+    }
+
+    /// It converts the user listing request into an internal listing
+    /// specification.
+    async fn listing_specification_from_user_request(&self, request: &ListingRequest) -> ListingSpecification {
+        let settings = self.configuration.settings.read().await;
+        let default_user_profile_page_size = settings.api.default_user_profile_page_size;
+        let max_user_profile_page_size = settings.api.max_user_profile_page_size;
+        drop(settings);
+
+        let page = request.page.unwrap_or(0);
+        let page_size = request.page_size.unwrap_or(default_user_profile_page_size);
+
+        // Guard that page size does not exceed the maximum
+        let page_size = if page_size > max_user_profile_page_size {
+            max_user_profile_page_size
+        } else {
+            page_size
+        };
+
+        let offset = u64::from(page * u32::from(page_size));
+
+        ListingSpecification { offset, page_size }
     }
 }
 
@@ -451,8 +502,10 @@ impl DbUserProfileRepository {
     /// # Errors
     ///
     /// It returns an error if there is a database error.
-    pub async fn get_all_user_profiles(&self) -> Result<Vec<UserProfile>, Error> {
-        self.database.get_user_profiles().await
+    pub async fn generate_listing(&self, specification: &ListingSpecification) -> Result<UserProfilesResponse, Error> {
+        self.database
+            .get_user_profiles_paginated(specification.offset, specification.page_size)
+            .await
     }
 }
 

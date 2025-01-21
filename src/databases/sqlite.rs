@@ -12,7 +12,7 @@ use super::database::TABLES_TO_TRUNCATE;
 use crate::databases::database;
 use crate::databases::database::{Category, Database, Driver, Sorting, TorrentCompact};
 use crate::models::category::CategoryId;
-use crate::models::response::TorrentsResponse;
+use crate::models::response::{TorrentsResponse, UserProfilesResponse};
 use crate::models::torrent::{Metadata, TorrentListing};
 use crate::models::torrent_file::{
     DbTorrent, DbTorrentAnnounceUrl, DbTorrentFile, DbTorrentHttpSeedUrl, DbTorrentNode, Torrent, TorrentFile,
@@ -156,11 +156,32 @@ impl Database for Sqlite {
             .map_err(|_| database::Error::UserNotFound)
     }
 
-    async fn get_user_profiles(&self) -> Result<Vec<UserProfile>, database::Error> {
-        query_as::<_, UserProfile>("SELECT * FROM torrust_user_profiles")
+    async fn get_user_profiles_paginated(&self, offset: u64, limit: u8) -> Result<UserProfilesResponse, database::Error> {
+        let mut query_string = format!("SELECT * FROM torrust_user_profiles");
+
+        let count_query = format!("SELECT COUNT(*) as count FROM ({query_string}) AS count_table");
+
+        let count_result: Result<i64, database::Error> = query_as(&count_query)
+            .fetch_one(&self.pool)
+            .await
+            .map(|(v,)| v)
+            .map_err(|_| database::Error::Error);
+
+        let count = count_result?;
+
+        query_string = format!("{query_string}  LIMIT ?, ?");
+
+        let res: Vec<UserProfile> = sqlx::query_as::<_, UserProfile>(&query_string)
+            .bind(i64::saturating_add_unsigned(0, offset))
+            .bind(limit)
             .fetch_all(&self.pool)
             .await
-            .map_err(|_| database::Error::Error)
+            .map_err(|_| database::Error::Error)?;
+
+        Ok(UserProfilesResponse {
+            total: u32::try_from(count).expect("variable `count` is larger than u32"),
+            results: res,
+        })
     }
 
     async fn get_user_compact_from_id(&self, user_id: i64) -> Result<UserCompact, database::Error> {

@@ -2,7 +2,7 @@
 //! context.
 use std::sync::Arc;
 
-use axum::extract::{self, Host, Path, State};
+use axum::extract::{self, Host, Path, Query, State};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::Deserialize;
@@ -10,6 +10,7 @@ use serde::Deserialize;
 use super::forms::{ChangePasswordForm, JsonWebToken, LoginForm, RegistrationForm};
 use super::responses::{self};
 use crate::common::AppData;
+use crate::services::user::ListingRequest;
 use crate::web::api::server::v1::extractors::optional_user_id::ExtractOptionalLoggedInUser;
 use crate::web::api::server::v1::responses::OkResponseData;
 
@@ -201,9 +202,14 @@ fn api_base_url(host: &str) -> String {
 #[allow(clippy::unused_async)]
 pub async fn get_user_profiles_handler(
     State(app_data): State<Arc<AppData>>,
+    Query(criteria): Query<ListingRequest>,
     ExtractOptionalLoggedInUser(maybe_user_id): ExtractOptionalLoggedInUser,
 ) -> Response {
-    match app_data.listing_service.get_user_profiles(maybe_user_id).await {
+    match app_data
+        .listing_service
+        .generate_user_profile_listing(&criteria, maybe_user_id)
+        .await
+    {
         Ok(users) => Json(crate::web::api::server::v1::responses::OkResponseData { data: users }).into_response(),
         Err(error) => error.into_response(),
     }

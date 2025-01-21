@@ -161,6 +161,7 @@ pub async fn run(configuration: Configuration, api_version: &Version) -> Running
     let about_service = Arc::new(about::Service::new(authorization_service.clone()));
 
     let listing_service = Arc::new(user::ListingService::new(
+        configuration.clone(),
         user_profile_repository.clone(),
         authorization_service.clone(),
     ))

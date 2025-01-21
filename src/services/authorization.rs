@@ -52,7 +52,7 @@ pub enum ACTION {
     GetCanonicalInfoHash,
     ChangePassword,
     BanUser,
-    GetUserProfiles,
+    GenerateUserProfilesListing,
 }
 
 pub struct Service {
@@ -249,7 +249,7 @@ impl Default for CasbinConfiguration {
                 admin, GetCanonicalInfoHash
                 admin, ChangePassword
                 admin, BanUser
-                admin, GetUserProfiles
+                admin, GenerateUserProfilesListing
                 registered, GetAboutPage
                 registered, GetLicensePage
                 registered, GetCategories
