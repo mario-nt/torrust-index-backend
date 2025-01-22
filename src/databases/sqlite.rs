@@ -157,7 +157,7 @@ impl Database for Sqlite {
     }
 
     async fn get_user_profiles_paginated(&self, offset: u64, limit: u8) -> Result<UserProfilesResponse, database::Error> {
-        let mut query_string = format!("SELECT * FROM torrust_user_profiles");
+        let mut query_string = "SELECT * FROM torrust_user_profiles".to_string();
 
         let count_query = format!("SELECT COUNT(*) as count FROM ({query_string}) AS count_table");
 
