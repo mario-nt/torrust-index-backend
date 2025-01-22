@@ -10,6 +10,14 @@ pub struct Api {
     /// The maximum page size for torrent lists.
     #[serde(default = "Api::default_max_torrent_page_size")]
     pub max_torrent_page_size: u8,
+
+    /// The default page size for user profile lists.
+    #[serde(default = "Api::default_user_profile_page_size")]
+    pub default_user_profile_page_size: u8,
+
+    /// The maximum page size for user profile lists.
+    #[serde(default = "Api::default_max_user_profile_page_size")]
+    pub max_user_profile_page_size: u8,
 }
 
 impl Default for Api {
@@ -17,6 +25,8 @@ impl Default for Api {
         Self {
             default_torrent_page_size: Api::default_default_torrent_page_size(),
             max_torrent_page_size: Api::default_max_torrent_page_size(),
+            default_user_profile_page_size: Api::default_user_profile_page_size(),
+            max_user_profile_page_size: Api::default_max_user_profile_page_size(),
         }
     }
 }
@@ -28,5 +38,13 @@ impl Api {
 
     fn default_max_torrent_page_size() -> u8 {
         30
+    }
+
+    fn default_user_profile_page_size() -> u8 {
+        10
+    }
+
+    fn default_max_user_profile_page_size() -> u8 {
+        100
     }
 }

@@ -3,6 +3,7 @@ use url::Url;
 
 use super::category::Category;
 use super::torrent::TorrentId;
+use super::user::UserProfile;
 use crate::databases::database::Category as DatabaseCategory;
 use crate::models::torrent::TorrentListing;
 use crate::models::torrent_file::TorrentFile;
@@ -122,4 +123,11 @@ impl TorrentResponse {
 pub struct TorrentsResponse {
     pub total: u32,
     pub results: Vec<TorrentListing>,
+}
+
+#[allow(clippy::module_name_repetitions)]
+#[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
+pub struct UserProfilesResponse {
+    pub total: u32,
+    pub results: Vec<UserProfile>,
 }
