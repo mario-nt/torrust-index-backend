@@ -185,13 +185,7 @@ fn api_base_url(host: &str) -> String {
 
 /// It handles the request to get all the user profiles.
 ///
-/// It returns:
-///
-/// - `200` response with a json containing a list with all the user profiles [`Vec<UserProfile>`](crate::models::user::UserProfile).
-/// - Other error status codes if there is a database error.
-///
-/// Refer to the [API endpoint documentation](crate::web::api::server::v1::contexts::user)
-/// for more information about this endpoint.
+///It returns a list of user profiles matching the search criteria.
 ///
 /// # Errors
 ///
