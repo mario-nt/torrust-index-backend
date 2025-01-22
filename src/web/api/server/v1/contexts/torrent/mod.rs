@@ -201,7 +201,7 @@
 //! ```toml
 //! [api]
 //! default_torrent_page_size = 10
-//! max_torrent_page_size = 30
+//! max_torrent_page_size = 100
 //! ```
 //!
 //! **Sorting GET parameters**

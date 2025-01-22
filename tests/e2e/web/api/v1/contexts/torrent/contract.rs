@@ -75,7 +75,7 @@ mod for_guests {
 
         let uploader = new_logged_in_user(&env).await;
 
-        let max_torrent_page_size = 30;
+        let max_torrent_page_size = 100;
 
         // Given we insert one torrent more than the page size limit
         for _ in 0..max_torrent_page_size {

@@ -45,6 +45,6 @@ impl Api {
     }
 
     fn default_max_user_profile_page_size() -> u8 {
-        100
+        30
     }
 }
