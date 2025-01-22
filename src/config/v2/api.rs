@@ -37,7 +37,7 @@ impl Api {
     }
 
     fn default_max_torrent_page_size() -> u8 {
-        30
+        100
     }
 
     fn default_user_profile_page_size() -> u8 {
