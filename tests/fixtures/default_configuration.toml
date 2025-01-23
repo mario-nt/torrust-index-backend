@@ -74,7 +74,7 @@ user_quota_period_seconds = 3600
 
 [api]
 default_torrent_page_size = 10
-max_torrent_page_size = 30
+max_torrent_page_size = 100
 
 [tracker_statistics_importer]
 port = 3002
