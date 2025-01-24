@@ -156,12 +156,23 @@ impl Database for Sqlite {
             .map_err(|_| database::Error::UserNotFound)
     }
 
-    async fn get_user_profiles_paginated(&self, offset: u64, limit: u8) -> Result<UserProfilesResponse, database::Error> {
-        let mut query_string = "SELECT * FROM torrust_user_profiles".to_string();
+    async fn get_user_profiles_search_paginated(
+        &self,
+        search: &Option<String>,
+        offset: u64,
+        limit: u8,
+    ) -> Result<UserProfilesResponse, database::Error> {
+        let user_name = match search {
+            None => "%".to_string(),
+            Some(v) => format!("%{v}%"),
+        };
+
+        let mut query_string = "SELECT * FROM torrust_user_profiles WHERE username LIKE ?".to_string();
 
         let count_query = format!("SELECT COUNT(*) as count FROM ({query_string}) AS count_table");
 
         let count_result: Result<i64, database::Error> = query_as(&count_query)
+            .bind(user_name.clone())
             .fetch_one(&self.pool)
             .await
             .map(|(v,)| v)
@@ -172,6 +183,7 @@ impl Database for Sqlite {
         query_string = format!("{query_string}  LIMIT ?, ?");
 
         let res: Vec<UserProfile> = sqlx::query_as::<_, UserProfile>(&query_string)
+            .bind(user_name.clone())
             .bind(i64::saturating_add_unsigned(0, offset))
             .bind(limit)
             .fetch_all(&self.pool)

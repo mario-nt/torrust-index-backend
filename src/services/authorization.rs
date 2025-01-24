@@ -273,6 +273,7 @@ impl Default for CasbinConfiguration {
                 guest, GetTorrentInfo
                 guest, GenerateTorrentInfoListing
                 guest, GetCanonicalInfoHash
+                guest, GenerateUserProfilesListing
                 ",
             ),
         }
