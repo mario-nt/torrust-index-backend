@@ -143,7 +143,7 @@ pub trait Database: Sync + Send {
     /// Get `UserProfile` from `username`.
     async fn get_user_profile_from_username(&self, username: &str) -> Result<UserProfile, Error>;
 
-    /// Get all user profiles in a paginated form as `UserProfilesResponse`.
+    /// Get all user profiles in a paginated and sorted form as `UserProfilesResponse` from `search`,`offset` and `page_size`.
     async fn get_user_profiles_search_paginated(
         &self,
         search: &Option<String>,
