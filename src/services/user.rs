@@ -36,6 +36,7 @@ fn no_email() -> String {
 pub struct ListingRequest {
     pub page_size: Option<u8>,
     pub page: Option<u32>,
+    pub search: Option<String>,
 }
 
 /// Internal specification for user profiles listings.
@@ -43,6 +44,7 @@ pub struct ListingRequest {
 pub struct ListingSpecification {
     pub offset: u64,
     pub page_size: u8,
+    pub search: Option<String>,
 }
 
 pub struct RegistrationService {
@@ -401,7 +403,11 @@ impl ListingService {
 
         let offset = u64::from(page * u32::from(page_size));
 
-        ListingSpecification { offset, page_size }
+        ListingSpecification {
+            search: request.search.clone(),
+            offset,
+            page_size,
+        }
     }
 }
 
@@ -504,7 +510,7 @@ impl DbUserProfileRepository {
     /// It returns an error if there is a database error.
     pub async fn generate_listing(&self, specification: &ListingSpecification) -> Result<UserProfilesResponse, Error> {
         self.database
-            .get_user_profiles_paginated(specification.offset, specification.page_size)
+            .get_user_profiles_search_paginated(&specification.search, specification.offset, specification.page_size)
             .await
     }
 }
