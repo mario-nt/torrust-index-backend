@@ -8,11 +8,13 @@ use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 #[cfg(test)]
 use mockall::automock;
 use pbkdf2::password_hash::rand_core::OsRng;
+use rand::seq::IteratorRandom;
 use serde_derive::Deserialize;
 use tracing::{debug, info};
 
 use super::authentication::DbUserAuthenticationRepository;
 use super::authorization::{self, ACTION};
+use crate::config::v2::auth::Auth;
 use crate::config::{Configuration, PasswordConstraints};
 use crate::databases::database::{Database, Error};
 use crate::errors::ServiceError;
@@ -405,6 +407,44 @@ impl ListingService {
     }
 }
 
+pub struct AdminActionsService {
+    authorization_service: Arc<authorization::Service>,
+    user_authentication_repository: Arc<DbUserAuthenticationRepository>,
+}
+
+impl AdminActionsService {
+    /// Resets the password of the selected user.
+    ///
+    /// # Errors
+    ///
+    /// This function will return a:
+    ///
+    /// * `ServiceError::InvalidPassword` if the current password supplied is invalid.
+    /// * `ServiceError::PasswordsDontMatch` if the supplied passwords do not match.
+    /// * `ServiceError::PasswordTooShort` if the supplied password is too short.
+    /// * `ServiceError::PasswordTooLong` if the supplied password is too long.
+    /// * An error if unable to successfully hash the password.
+    /// * An error if unable to change the password in the database.
+    /// * An error if it is not possible to authorize the action
+    pub async fn reset_user_password(&self, maybe_user_id: Option<UserId>, user_info: UserProfile) -> Result<(), ServiceError> {
+        self.authorization_service
+            .authorize(ACTION::ResetUserPassword, maybe_user_id)
+            .await?;
+
+        info!("Resetting user password for user ID: {}", user_info.username);
+
+        let new_password = generate_random_password();
+
+        let password_hash = hash_password(&new_password)?;
+
+        self.user_authentication_repository
+            .change_password(user_info.user_id, &password_hash)
+            .await?;
+
+        Ok(())
+    }
+}
+
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Repository: Sync + Send {
@@ -577,4 +617,24 @@ fn hash_password(password: &str) -> Result<String, ServiceError> {
     let password_hash = argon2.hash_password(password.as_bytes(), &salt)?.to_string();
 
     Ok(password_hash)
+}
+
+//Generates a random password with numbers, letters and special characters with a length of the max length allow for users's passwords
+fn generate_random_password() -> String {
+    let charset = "2A&,B;C8D!G?HIJ@KL5MN1OPQ#RST]U`VW*XYZ\
+                   {ab)c~d$ef=g.h<i_jklmn%op>qr/st6u+vw}xyz\
+                   |0-EF3^4[7(:9\
+                   ";
+
+    let mut rng = rand::thread_rng();
+
+    let password_constraints = Auth::default().password_constraints;
+
+    let password_length = password_constraints.max_password_length;
+
+    let password: String = (0..password_length)
+        .map(|_| charset.chars().choose(&mut rng).unwrap())
+        .collect();
+
+    password
 }
