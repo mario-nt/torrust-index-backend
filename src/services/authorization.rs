@@ -53,6 +53,7 @@ pub enum ACTION {
     ChangePassword,
     BanUser,
     GenerateUserProfilesListing,
+    ResetUserPassword,
 }
 
 pub struct Service {
@@ -250,6 +251,7 @@ impl Default for CasbinConfiguration {
                 admin, ChangePassword
                 admin, BanUser
                 admin, GenerateUserProfilesListing
+                admin, ResetUserPassword
                 registered, GetAboutPage
                 registered, GetLicensePage
                 registered, GetCategories
