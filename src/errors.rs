@@ -22,6 +22,8 @@ pub enum ServiceError {
 
     #[display("Email is required")] //405j
     EmailMissing,
+    #[display("A verified email is required")]
+    VerifiedEmailMissing,
     #[display("Please enter a valid email address")] //405j
     EmailInvalid,
 
@@ -59,6 +61,9 @@ pub enum ServiceError {
     PasswordTooLong,
     #[display("Passwords don't match")]
     PasswordsDontMatch,
+
+    #[display("Couldn't send new password to the user")]
+    FailedToSendResetPassword,
 
     /// when the a username is already taken
     #[display("Username not available")]
@@ -288,6 +293,7 @@ pub fn http_status_code_for_service_error(error: &ServiceError) -> StatusCode {
         ServiceError::PasswordTooShort => StatusCode::BAD_REQUEST,
         ServiceError::PasswordTooLong => StatusCode::BAD_REQUEST,
         ServiceError::PasswordsDontMatch => StatusCode::BAD_REQUEST,
+        ServiceError::FailedToSendResetPassword => StatusCode::INTERNAL_SERVER_ERROR,
         ServiceError::UsernameTaken => StatusCode::BAD_REQUEST,
         ServiceError::UsernameInvalid => StatusCode::BAD_REQUEST,
         ServiceError::EmailTaken => StatusCode::BAD_REQUEST,
@@ -316,6 +322,7 @@ pub fn http_status_code_for_service_error(error: &ServiceError) -> StatusCode {
         ServiceError::TagAlreadyExists => StatusCode::BAD_REQUEST,
         ServiceError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
         ServiceError::EmailMissing => StatusCode::NOT_FOUND,
+        ServiceError::VerifiedEmailMissing => StatusCode::NOT_FOUND,
         ServiceError::FailedToSendVerificationEmail => StatusCode::INTERNAL_SERVER_ERROR,
         ServiceError::WhitelistingError => StatusCode::INTERNAL_SERVER_ERROR,
         ServiceError::DatabaseError => StatusCode::INTERNAL_SERVER_ERROR,
