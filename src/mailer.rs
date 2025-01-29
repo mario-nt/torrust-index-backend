@@ -151,6 +151,29 @@ impl Service {
 
         format!("{base_url}/{API_VERSION_URL_PREFIX}/user/email/verify/{token}")
     }
+
+    /// Send reset password email.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if unable to send an email.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the multipart builder had an error.
+    pub async fn send_reset_password_mail(&self, to: &str, username: &str, password: &str) -> Result<(), ServiceError> {
+        let builder = self.get_builder(to).await;
+
+        let mail = build_letter(&password, username, builder)?;
+
+        match self.mailer.send(mail).await {
+            Ok(_res) => Ok(()),
+            Err(e) => {
+                eprintln!("Failed to send email: {e}");
+                Err(ServiceError::FailedToSendVerificationEmail)
+            }
+        }
+    }
 }
 
 fn build_letter(verification_url: &str, username: &str, builder: MessageBuilder) -> Result<Message, ServiceError> {
@@ -192,6 +215,50 @@ fn build_content(verification_url: &str, username: &str) -> Result<(String, Stri
     context.insert("verification", &verification_url);
     context.insert("username", &username);
     let html_body = TEMPLATES.render("html_verify_email", &context)?;
+    Ok((plain_body, html_body))
+}
+
+fn build_reset_password_letter(password: &str, username: &str, builder: MessageBuilder) -> Result<Message, ServiceError> {
+    let (plain_body, html_body) = build_reset_password_content(password, username).map_err(|e| {
+        tracing::error!("{e}");
+        ServiceError::InternalServerError
+    })?;
+
+    Ok(builder
+        .subject("Torrust - Password reset")
+        .multipart(
+            MultiPart::alternative()
+                .singlepart(
+                    SinglePart::builder()
+                        .header(lettre::message::header::ContentType::TEXT_PLAIN)
+                        .body(plain_body),
+                )
+                .singlepart(
+                    SinglePart::builder()
+                        .header(lettre::message::header::ContentType::TEXT_HTML)
+                        .body(html_body),
+                ),
+        )
+        .expect("the `multipart` builder had an error"))
+}
+
+fn build_reset_password_content(password: &str, username: &str) -> Result<(String, String), tera::Error> {
+    let plain_body = format!(
+        "
+                Hello, {username}!
+
+                Your password has been reset.
+                
+                Find below your new password: 
+                {password}
+
+                We recommend replacing it as soon as possible with a new and strong password of your own.
+            "
+    );
+    let mut context = Context::new();
+    context.insert("password", &password);
+    context.insert("username", &username);
+    let html_body = TEMPLATES.render("html_reset_password", &context)?;
     Ok((plain_body, html_body))
 }
 
