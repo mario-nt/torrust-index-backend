@@ -410,9 +410,26 @@ impl ListingService {
 pub struct AdminActionsService {
     authorization_service: Arc<authorization::Service>,
     user_authentication_repository: Arc<DbUserAuthenticationRepository>,
+    user_profile_repository: Arc<DbUserProfileRepository>,
+    mailer: Arc<mailer::Service>,
 }
 
 impl AdminActionsService {
+    #[must_use]
+    pub fn new(
+        authorization_service: Arc<authorization::Service>,
+        user_authentication_repository: Arc<DbUserAuthenticationRepository>,
+        user_profile_repository: Arc<DbUserProfileRepository>,
+        mailer: Arc<mailer::Service>,
+    ) -> Self {
+        Self {
+            authorization_service,
+            user_authentication_repository,
+            user_profile_repository,
+            mailer,
+        }
+    }
+
     /// Resets the password of the selected user.
     ///
     /// # Errors
@@ -426,25 +443,43 @@ impl AdminActionsService {
     /// * An error if unable to successfully hash the password.
     /// * An error if unable to change the password in the database.
     /// * An error if it is not possible to authorize the action
-    pub async fn reset_user_password(&self, maybe_user_id: Option<UserId>, user_info: UserProfile) -> Result<(), ServiceError> {
+    pub async fn reset_user_password(
+        &self,
+        maybe_admin_user_id: Option<UserId>,
+        reset_password_user_id: UserId,
+    ) -> Result<(), ServiceError> {
         self.authorization_service
             .authorize(ACTION::ResetUserPassword, maybe_user_id)
             .await?;
 
-        info!("Resetting user password for user ID: {}", user_info.username);
+        if let Some(email) = Some(&user_info.email) {
+            if user_info.email_verified {
+                info!("Resetting user password for user ID: {}", user_info.username);
 
-        let new_password = generate_random_password();
+                let new_password = generate_random_password();
 
-        let password_hash = hash_password(&new_password)?;
+                let password_hash = hash_password(&new_password)?;
 
-        self.user_authentication_repository
-            .change_password(user_info.user_id, &password_hash)
-            .await?;
+                self.user_authentication_repository
+                    .change_password(user_info.user_id, &password_hash)
+                    .await?;
 
-        Ok(())
+                let mail_res = self
+                    .mailer
+                    .send_reset_password_mail(email, &user_info.username, &new_password)
+                    .await;
+
+                if mail_res.is_err() {
+                    return Err(ServiceError::FailedToSendResetPassword);
+                }
+
+                ()
+            }
+            return Err(ServiceError::VerifiedEmailMissing);
+        }
+        Err(ServiceError::EmailMissing)
     }
 }
-
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Repository: Sync + Send {

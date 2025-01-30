@@ -151,6 +151,33 @@ pub async fn change_password_handler(
     }
 }
 
+/// It changes the user's password.
+///
+/// # Errors
+///
+/// It returns an error if:
+///
+/// - The user account is not found.
+#[allow(clippy::unused_async)]
+#[allow(clippy::missing_panics_doc)]
+pub async fn reset_password_handler(
+    State(app_data): State<Arc<AppData>>,
+    ExtractOptionalLoggedInUser(maybe_user_id): ExtractOptionalLoggedInUser,
+    extract::Json(change_password_form): extract::Json<ChangePasswordForm>,
+) -> Response {
+    match app_data
+        .profile_service
+        .change_password(maybe_user_id, &change_password_form)
+        .await
+    {
+        Ok(()) => Json(OkResponseData {
+            data: format!("Password changed for user with ID: {}", maybe_user_id.unwrap()),
+        })
+        .into_response(),
+        Err(error) => error.into_response(),
+    }
+}
+
 /// It bans a user from the index.
 ///
 /// # Errors
